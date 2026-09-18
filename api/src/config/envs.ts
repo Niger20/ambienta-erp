@@ -16,6 +16,12 @@ export const envs = {
     // permitidos (ver cors.adapter.ts); esto es solo para lo que no es localhost.
     ALLOWED_ORIGINS: get('ALLOWED_ORIGINS').default('').asString(),
 
+    // Resend (API HTTP) tiene prioridad sobre SMTP si está configurado — muchos
+    // hostings (Railway incluido) bloquean el tráfico SMTP saliente, así que una
+    // API por HTTPS es la opción que realmente funciona en producción.
+    RESEND_API_KEY: get('RESEND_API_KEY').default('').asString(),
+    RESEND_FROM: get('RESEND_FROM').default('Ambienta ERP <onboarding@resend.dev>').asString(),
+
     SMTP_HOST: get('SMTP_HOST').default('').asString(),
     SMTP_PORT: get('SMTP_PORT').default('587').asPortNumber(),
     SMTP_USER: get('SMTP_USER').default('').asString(),

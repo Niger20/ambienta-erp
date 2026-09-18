@@ -6,7 +6,7 @@ import { UserDatasourceImpl } from "../../infrastructure/datasource/user.datasou
 import { UserRepositoryImpl } from "../../infrastructure/repositories/user.repository.impl";
 import { buildAuthMiddleware } from "../../infrastructure/factories/auth.middleware.factory";
 import { buildPermissionMiddleware } from "../../infrastructure/factories/permission.middleware.factory";
-import { NodemailerAdapter } from "../../infrastructure/mail/nodemailer.adapter";
+import { buildEmailSender } from "../../infrastructure/factories/email.factory";
 import { envs } from "../../config/envs";
 
 
@@ -20,7 +20,7 @@ export class AuthRoutes {
         const repository = new UserRepositoryImpl(datasource);
         const tokenSigner = new JwtAdapter();
         const passwordHasher = new BcryptAdapter();
-        const emailSender = new NodemailerAdapter();
+        const emailSender = buildEmailSender();
         const controller = new AuthController(repository, passwordHasher, tokenSigner, emailSender, envs.APP_BASE_URL);
 
         const authMiddleware = buildAuthMiddleware();
