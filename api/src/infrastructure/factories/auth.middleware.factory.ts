@@ -10,6 +10,5 @@ export const buildAuthMiddleware = (): AuthMiddleware => {
     const userRepository = new UserRepositoryImpl(userDatasource);
     const getByIdUser = new GetByIdUser(userRepository);
 
-    return new AuthMiddleware(tokenSigner, getByIdUser);
+    return new AuthMiddleware(tokenSigner, getByIdUser, userRepository);
 };
-

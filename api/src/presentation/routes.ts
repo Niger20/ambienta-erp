@@ -5,6 +5,8 @@ import { CategoriaProductoRoutes } from "./categoria-productos/routes";
 import { ProveedoresRoutes } from "./proveedores/routes";
 import { ClientesRoutes } from "./clientes/routes";
 import { RepartidorRoutes } from "./repartidor/routes";
+import { RolesRoutes } from "./roles/routes";
+import { PermisosRoutes } from "./permisos/routes";
 import { EmpresasRoutes } from "./empresa/routes";
 import { PagosRoutes } from "./pagos/routes";
 import { ProductosRoutes } from "./producto/routes";
@@ -70,6 +72,8 @@ export class AppRoutes {
         router.use('/api/proveedores', [authMiddleware.validateJWT.bind(authMiddleware)], ProveedoresRoutes.routes);
         router.use('/api/clientes', [authMiddleware.validateJWT.bind(authMiddleware)], ClientesRoutes.routes);
         router.use('/api/repartidores', [authMiddleware.validateJWT.bind(authMiddleware)], RepartidorRoutes.routes);
+        router.use('/api/roles', [authMiddleware.validateJWT.bind(authMiddleware)], RolesRoutes.routes);
+        router.use('/api/permisos', [authMiddleware.validateJWT.bind(authMiddleware)], PermisosRoutes.routes);
         router.use('/api/empresa', [authMiddleware.validateJWT.bind(authMiddleware)], EmpresasRoutes.routes);
         router.use('/api/pagos', [authMiddleware.validateJWT.bind(authMiddleware)], PagosRoutes.routes);
         router.use('/api/productos', [authMiddleware.validateJWT.bind(authMiddleware)], ProductosRoutes.routes);

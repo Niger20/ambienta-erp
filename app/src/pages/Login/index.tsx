@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useLogin } from './useLogin';
 import { IconEye, IconEyeOff } from './icons';
 
@@ -146,10 +147,17 @@ const Login = () => {
                     </form>
                 </div>
 
+                <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    ¿No tienes cuenta?{' '}
+                    <Link to="/register" style={{ color: 'var(--accent-primary)', fontWeight: 600, textDecoration: 'none' }}>
+                        Regístrate
+                    </Link>
+                </div>
+
                 {/* Footer */}
                 <div style={{
                     textAlign: 'center',
-                    marginTop: '1.25rem',
+                    marginTop: '0.75rem',
                     fontSize: '0.75rem',
                     color: 'var(--text-secondary)',
                     opacity: 0.5,

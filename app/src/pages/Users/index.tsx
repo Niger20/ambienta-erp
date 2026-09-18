@@ -1,11 +1,14 @@
 import { IconPlus, IconEdit, IconTrash } from './icons';
 import { useUsersCrud } from './useUsersCrud';
 import { UserModal } from './UserModal';
+import { useAuth } from '../../context/AuthContext';
 
 const Users = () => {
+    const { hasPermission } = useAuth();
     const {
         currentUser,
         usuarios,
+        roles,
         isLoading,
         showModal,
         setShowModal,
@@ -18,6 +21,10 @@ const Users = () => {
         handleDelete,
     } = useUsersCrud();
 
+    const canCrear = hasPermission('usuarios.crear');
+    const canEditar = hasPermission('usuarios.editar');
+    const canEliminar = hasPermission('usuarios.eliminar');
+
     return (
         <div className="page-container">
             <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 0, marginBottom: '1.5rem', border: 'none' }}>
@@ -25,10 +32,12 @@ const Users = () => {
                     <h2 className="card-title" style={{ fontSize: '1.5rem' }}>Gestión de Usuarios</h2>
                     <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Administración de accesos y roles (Solo Administradores).</p>
                 </div>
-                <button className="btn btn-primary" onClick={handleOpenCreate} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <IconPlus />
-                    <span>Nuevo Usuario</span>
-                </button>
+                {canCrear && (
+                    <button className="btn btn-primary" onClick={handleOpenCreate} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <IconPlus />
+                        <span>Nuevo Usuario</span>
+                    </button>
+                )}
             </div>
 
             <div className="card" style={{ padding: '1.5rem' }}>
@@ -92,27 +101,29 @@ const Users = () => {
                                         </td>
                                         <td style={{ padding: '1rem 0', textAlign: 'right' }}>
                                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                                <button
-                                                    className="btn"
-                                                    onClick={() => handleOpenEdit(u)}
-                                                    style={{
-                                                        padding: '0.35rem 0.65rem',
-                                                        fontSize: '0.78rem',
-                                                        border: '1px solid var(--border-color)',
-                                                        backgroundColor: 'var(--bg-secondary)',
-                                                        color: 'var(--text-primary)',
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.25rem',
-                                                        borderRadius: 'var(--radius-md)',
-                                                        fontWeight: 500
-                                                    }}
-                                                    title="Editar usuario"
-                                                >
-                                                    <IconEdit />
-                                                    <span>Editar</span>
-                                                </button>
-                                                {!isCurrent && (
+                                                {(isCurrent || canEditar) && (
+                                                    <button
+                                                        className="btn"
+                                                        onClick={() => handleOpenEdit(u)}
+                                                        style={{
+                                                            padding: '0.35rem 0.65rem',
+                                                            fontSize: '0.78rem',
+                                                            border: '1px solid var(--border-color)',
+                                                            backgroundColor: 'var(--bg-secondary)',
+                                                            color: 'var(--text-primary)',
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.25rem',
+                                                            borderRadius: 'var(--radius-md)',
+                                                            fontWeight: 500
+                                                        }}
+                                                        title="Editar usuario"
+                                                    >
+                                                        <IconEdit />
+                                                        <span>Editar</span>
+                                                    </button>
+                                                )}
+                                                {!isCurrent && canEliminar && (
                                                     <button
                                                         className="btn"
                                                         onClick={() => handleDelete(uid)}
@@ -153,6 +164,7 @@ const Users = () => {
                 show={showModal}
                 isEditing={isEditing}
                 form={form}
+                roles={roles}
                 onChange={setForm}
                 onSubmit={handleSave}
                 onClose={() => setShowModal(false)}

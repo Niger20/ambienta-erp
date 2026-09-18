@@ -22,6 +22,9 @@ RUN npm run build
 
 EXPOSE 3000
 
-# El comando final lo delegaremos al docker-compose para que 
-# ejecute Prisma ANTES de iniciar el servidor Node.
-CMD ["npm", "run", "start"]
+# Antes de arrancar: aplica migraciones pendientes contra la BD de producción y
+# siembra el catálogo de roles/permisos + el usuario administrador por defecto
+# si aún no existe ninguno. Ambos pasos son seguros de re-ejecutar en cada deploy
+# (migrate deploy no reaplica migraciones ya aplicadas; el seed usa upsert y solo
+# crea el admin cuando no hay ninguno).
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run db:seed && npm run start"]

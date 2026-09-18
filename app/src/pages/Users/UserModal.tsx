@@ -1,17 +1,18 @@
 import { IconUser } from './icons';
-import { ROLES } from './types';
+import type { RolOption } from './types';
 
 interface UserForm {
     id: number | undefined;
     nombreusuario: string;
     contrasena: string;
-    rol: string;
+    rolid: number | undefined;
 }
 
 interface UserModalProps {
     show: boolean;
     isEditing: boolean;
     form: UserForm;
+    roles: RolOption[];
     onChange: (form: UserForm) => void;
     onSubmit: (e: React.FormEvent) => void;
     onClose: () => void;
@@ -23,7 +24,7 @@ interface UserModalProps {
  * "estándar", este modal original NO se cierra al hacer click en el backdrop,
  * solo con el botón "Cancelar". Se preserva ese comportamiento tal cual.
  */
-export const UserModal = ({ show, isEditing, form, onChange, onSubmit, onClose, isEditingOwnUser }: UserModalProps) => {
+export const UserModal = ({ show, isEditing, form, roles, onChange, onSubmit, onClose, isEditingOwnUser }: UserModalProps) => {
     if (!show) return null;
 
     return (
@@ -44,8 +45,13 @@ export const UserModal = ({ show, isEditing, form, onChange, onSubmit, onClose, 
                     </div>
                     <div className="form-group">
                         <label className="form-label">Rol del Sistema *</label>
-                        <select className="form-input" value={form.rol} onChange={e => onChange({ ...form, rol: e.target.value })} required>
-                            {ROLES.map(r => <option key={r} value={r}>{r.toUpperCase()}</option>)}
+                        <select
+                            className="form-input"
+                            value={form.rolid ?? ''}
+                            onChange={e => onChange({ ...form, rolid: Number(e.target.value) })}
+                            required
+                        >
+                            {roles.map(r => <option key={r.id} value={r.id}>{r.nombre.toUpperCase()}</option>)}
                         </select>
                     </div>
                     <div className="modal-actions">

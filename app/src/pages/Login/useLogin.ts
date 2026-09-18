@@ -23,7 +23,7 @@ export function useLogin() {
                 password: password
             });
 
-            login(response.data.token, response.data.user);
+            login(response.data.token, response.data.user, response.data.permissions);
             navigate('/dashboard');
 
         } catch (err: any) {

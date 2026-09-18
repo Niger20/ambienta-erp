@@ -268,6 +268,16 @@ model usuarios {
   contrasenahash         String                   @db.VarChar(255)
   fecharegistro          DateTime?                @default(now()) @db.Timestamp(6)
   rol                    String?                  @db.VarChar(50)
+  nombre                 String?                  @db.VarChar(100)
+  apellido               String?                  @db.VarChar(100)
+  correo                 String?                  @unique @db.VarChar(150)
+  telefono               String?                  @db.VarChar(30)
+  fotoperfil             String?                  @db.VarChar(255)
+  correoverificado       Boolean                  @default(false)
+  rolid                  Int?
+  roles                  roles?                   @relation(fields: [rolid], references: [rolid], onDelete: NoAction, onUpdate: NoAction)
+  verificacionestoken    verificacionestoken[]
+  tokensesion            tokensesion[]
   anticipossalario       anticipossalario[]
   auditoria              auditoria[]
   devoluciones           devoluciones[]
@@ -280,6 +290,55 @@ model usuarios {
   prestamosempleados     prestamosempleados[]
   sesiones               sesiones[]
   solicitudesvacaciones  solicitudesvacaciones[]
+}
+
+model roles {
+  rolid         Int             @id @default(autoincrement())
+  nombre        String          @unique @db.VarChar(50)
+  descripcion   String?         @db.VarChar(255)
+  essistema     Boolean         @default(false)
+  fechacreacion DateTime?       @default(now()) @db.Timestamp(6)
+  usuarios      usuarios[]
+  rolespermisos rolespermisos[]
+}
+
+model permisos {
+  permisoid     Int             @id @default(autoincrement())
+  codigo        String          @unique @db.VarChar(100)
+  modulo        String          @db.VarChar(50)
+  descripcion   String?         @db.VarChar(255)
+  rolespermisos rolespermisos[]
+}
+
+model rolespermisos {
+  rolid     Int
+  permisoid Int
+  roles     roles    @relation(fields: [rolid], references: [rolid], onDelete: Cascade, onUpdate: NoAction)
+  permisos  permisos @relation(fields: [permisoid], references: [permisoid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([rolid, permisoid])
+}
+
+model verificacionestoken {
+  tokenid       Int       @id @default(autoincrement())
+  usuarioid     Int
+  token         String    @unique @db.VarChar(255)
+  tipo          String    @db.VarChar(30)
+  expiracion    DateTime  @db.Timestamp(6)
+  usado         Boolean   @default(false)
+  fechacreacion DateTime? @default(now()) @db.Timestamp(6)
+  usuarios      usuarios  @relation(fields: [usuarioid], references: [usuarioid], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tokensesion {
+  tokenid       Int       @id @default(autoincrement())
+  usuarioid     Int
+  jti           String    @unique @db.VarChar(64)
+  fechaemision  DateTime  @default(now()) @db.Timestamp(6)
+  fechaexpira   DateTime  @db.Timestamp(6)
+  revocado      Boolean   @default(false)
+  fecharevocado DateTime?
+  usuarios      usuarios  @relation(fields: [usuarioid], references: [usuarioid], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model ventadelivery {

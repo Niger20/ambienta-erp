@@ -7,6 +7,7 @@ export class UpdateUserDto {
         public readonly nombreusuario?: string,
         public readonly contrasenahash?: string,
         public readonly rol?: UserRole | null,
+        public readonly rolid?: number | null,
     ) {}
 
     get values() {
@@ -15,6 +16,7 @@ export class UpdateUserDto {
         if (this.nombreusuario != null) returnObj.nombreusuario = this.nombreusuario;
         if (this.contrasenahash != null) returnObj.contrasenahash = this.contrasenahash;
         if (this.rol != null) returnObj.rol = this.rol;
+        if (this.rolid != null) returnObj.rolid = this.rolid;
 
         return returnObj;
     }
@@ -24,7 +26,7 @@ export class UpdateUserDto {
         const parsedId = Number(id);
         if (id == null || Number.isNaN(parsedId)) return ['El id es obligatorio y debe ser un numero', undefined];
 
-        const { nombreusuario, contrasenahash, contrasena, rol } = props;
+        const { nombreusuario, contrasenahash, contrasena, rol, rolid } = props;
 
         if (nombreusuario != null && typeof nombreusuario !== 'string') {
             return ['El nombre de usuario debe ser una cadena de texto', undefined];
@@ -44,13 +46,21 @@ export class UpdateUserDto {
             parsedRol = value;
         }
 
+        let parsedRolId: number | null | undefined;
+        if (rolid != null) {
+            const value = Number(rolid);
+            if (Number.isNaN(value)) return ['El rolid debe ser un numero', undefined];
+            parsedRolId = value;
+        }
+
         return [
             undefined,
             new UpdateUserDto(
                 parsedId,
                 nombreusuario,
                 passwordValue,
-                parsedRol ?? null
+                parsedRol ?? null,
+                parsedRolId ?? null,
             ),
         ];
     }
@@ -79,7 +89,8 @@ export class UpdateUserDto {
             this.id,
             this.nombreusuario,
             contrasenahash,
-            this.rol ?? null
+            this.rol ?? null,
+            this.rolid ?? null,
         );
     }
 }

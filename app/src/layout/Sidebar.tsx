@@ -26,6 +26,7 @@ const icons: Record<string, ReactNode> = {
     reportes:  <Icon d="M18 20V10M12 20V4M6 20v-6" />,
     sesiones:  <Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
     usuarios:  <Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />,
+    roles:     <Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
     settings:  <Icon d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.1a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z" d2="M12 15a3 3 0 100-6 3 3 0 000 6z" />,
 };
 
@@ -60,12 +61,12 @@ const Sidebar = ({ isOpen, onClose, collapsed }: {
     onClose?: () => void;
     collapsed?: boolean;
 }) => {
-    const { user } = useAuth();
+    const { user, hasPermission } = useAuth();
     const rol = user?.rol;
     const nombre = user?.nombreusuario || 'Usuario';
 
-    const isAdmin = rol === 'administrador';
-    const isAtLeastEmpleado = rol === 'administrador' || rol === 'empleado';
+    const showGestion = hasPermission('productos.ver') || hasPermission('ventas.ver') || hasPermission('compras.ver') || hasPermission('deliveries.ver');
+    const showAdministracion = hasPermission('gastos.ver') || hasPermission('sesiones.ver') || hasPermission('reportes.ver') || hasPermission('usuarios.ver') || hasPermission('roles.ver');
 
     // Generate initials from name
     const initials = nombre
@@ -90,29 +91,31 @@ const Sidebar = ({ isOpen, onClose, collapsed }: {
 
             {/* ── Navigation ── */}
             <nav className="sidebar-nav" style={{ padding: collapsed ? '1.5rem 0.5rem' : '1.5rem 1rem' }}>
-                {/* General — all roles */}
+                {/* General — visible según permisos básicos */}
                 <NavSection label="General" collapsed={collapsed} />
-                <SidebarLink to="/dashboard"  label="Dashboard"      icon={icons.dashboard}  onClose={onClose} collapsed={collapsed} />
-                <SidebarLink to="/pos"        label="Punto de Venta" icon={icons.pos}        onClose={onClose} collapsed={collapsed} />
+                {hasPermission('dashboard.ver') && <SidebarLink to="/dashboard" label="Dashboard"      icon={icons.dashboard} onClose={onClose} collapsed={collapsed} />}
+                {hasPermission('pos.ver') && <SidebarLink to="/pos"       label="Punto de Venta" icon={icons.pos}       onClose={onClose} collapsed={collapsed} />}
 
-                {/* Gestión — admin & empleado */}
-                {isAtLeastEmpleado && (
+                {/* Gestión */}
+                {showGestion && (
                     <>
                         <NavSection label="Gestión" collapsed={collapsed} />
-                        <SidebarLink to="/products"   label="Productos"     icon={icons.products}   onClose={onClose} collapsed={collapsed} />
-                        <SidebarLink to="/sales"      label="Ventas"        icon={icons.sales}      onClose={onClose} collapsed={collapsed} />
-                        <SidebarLink to="/purchases"  label="Compras"       icon={icons.purchases}  onClose={onClose} collapsed={collapsed} />
-                        <SidebarLink to="/deliveries" label="Repartidores"  icon={icons.deliveries} onClose={onClose} collapsed={collapsed} />
+                        {hasPermission('productos.ver') && <SidebarLink to="/products"   label="Productos"     icon={icons.products}   onClose={onClose} collapsed={collapsed} />}
+                        {hasPermission('ventas.ver') && <SidebarLink to="/sales"      label="Ventas"        icon={icons.sales}      onClose={onClose} collapsed={collapsed} />}
+                        {hasPermission('compras.ver') && <SidebarLink to="/purchases"  label="Compras"       icon={icons.purchases}  onClose={onClose} collapsed={collapsed} />}
+                        {hasPermission('deliveries.ver') && <SidebarLink to="/deliveries" label="Repartidores"  icon={icons.deliveries} onClose={onClose} collapsed={collapsed} />}
                     </>
                 )}
 
-                {/* Administración — admin only */}
-                {isAdmin && (
+                {/* Administración */}
+                {showAdministracion && (
                     <>
                         <NavSection label="Administración" collapsed={collapsed} />
-                        <SidebarLink to="/expenses"  label="Gastos"    icon={icons.expenses}  onClose={onClose} collapsed={collapsed} />
-                        <SidebarLink to="/sesiones"  label="Sesiones"  icon={icons.sesiones}  onClose={onClose} collapsed={collapsed} />
-                        <SidebarLink to="/usuarios"  label="Usuarios"  icon={icons.usuarios}  onClose={onClose} collapsed={collapsed} />
+                        {hasPermission('gastos.ver') && <SidebarLink to="/expenses" label="Gastos"    icon={icons.expenses}  onClose={onClose} collapsed={collapsed} />}
+                        {hasPermission('sesiones.ver') && <SidebarLink to="/sesiones" label="Sesiones"  icon={icons.sesiones}  onClose={onClose} collapsed={collapsed} />}
+                        {hasPermission('reportes.ver') && <SidebarLink to="/reportes" label="Reportes"  icon={icons.reportes}  onClose={onClose} collapsed={collapsed} />}
+                        {hasPermission('usuarios.ver') && <SidebarLink to="/usuarios" label="Usuarios"  icon={icons.usuarios}  onClose={onClose} collapsed={collapsed} />}
+                        {hasPermission('roles.ver') && <SidebarLink to="/roles" label="Roles"     icon={icons.roles}     onClose={onClose} collapsed={collapsed} />}
                     </>
                 )}
 
@@ -127,7 +130,14 @@ const Sidebar = ({ isOpen, onClose, collapsed }: {
             {rol && (
                 <div className="sidebar-user" style={{ justifyContent: collapsed ? 'center' : 'flex-start', padding: collapsed ? '1rem 0' : '1rem 1.25rem', width: collapsed ? '72px' : '260px' }}>
                     <div className="sidebar-avatar" aria-hidden="true" title={collapsed ? `${nombre} (${rolLabel[rol] ?? rol})` : undefined}>
-                        {initials || '?'}
+                        {user?.fotoperfil ? (
+                            <img
+                                src={user.fotoperfil}
+                                alt=""
+                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                        ) : (initials || '?')}
                     </div>
                     {!collapsed && (
                         <div className="sidebar-user-info">

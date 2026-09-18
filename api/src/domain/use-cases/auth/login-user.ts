@@ -1,12 +1,16 @@
+import { randomUUID } from 'node:crypto';
 import { UserEntity } from "../../entitites/user.entity";
 import { LoginUserDto } from "../../dtos";
 import { UserRepository } from "../../repositories/user.repository";
 import { PasswordHasher } from "../../services/password-hasher";
 import { TokenSigner } from "../../services/token-signer";
 
+const TOKEN_TTL_HOURS = 8;
+
 export interface LoginUserResult {
     user: UserEntity;
     token: string;
+    permissions: string[];
 }
 
 export interface LoginUserUseCase {
@@ -28,13 +32,20 @@ export class LoginUser implements LoginUserUseCase {
         const matches = this.passwordHasher.compare(dto.contrasena, user.contrasenahash);
         if (!matches) throw 'Credenciales invalidas';
 
+        const jti = randomUUID();
         const token = this.tokenSigner.generate({
             id: user.id,
             nombreusuario: user.nombreusuario,
-            rol: user.rol
-        });
+            rol: user.rol,
+            jti,
+        }, `${TOKEN_TTL_HOURS}h`);
 
-        return { user, token };
+        const fechaexpira = new Date(Date.now() + TOKEN_TTL_HOURS * 60 * 60 * 1000);
+        await this.userRepository.createTokenSesion(user.id, jti, fechaexpira);
+
+        const permissions = await this.userRepository.getPermisosDeRol(user.rolid ?? null);
+
+        return { user, token, permissions };
     }
 
 }

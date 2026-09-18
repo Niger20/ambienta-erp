@@ -3,6 +3,10 @@ export interface User {
     id?: number;
     nombreusuario: string;
     rol: string;
+    rolid?: number | null;
 }
 
-export const ROLES = ['administrador', 'empleado', 'invitado'];
+export interface RolOption {
+    id: number;
+    nombre: string;
+}

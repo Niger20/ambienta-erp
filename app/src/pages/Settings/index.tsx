@@ -1,33 +1,133 @@
-import Swal from 'sweetalert2';
 import { themeOptions } from './types';
 import { useThemeSettings } from './useThemeSettings';
 import { useCompanyParams } from './useCompanyParams';
-
-const triggerConfirmAlert = () => {
-    Swal.fire({
-        title: '¿Confirmar Acción de Prueba?',
-        text: 'Esta es una alerta de prueba del sistema. Observa cómo hereda y respeta la paleta del tema seleccionado.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Confirmar',
-        cancelButtonText: 'Cancelar'
-    });
-};
+import { useProfile } from './useProfile';
 
 const Settings = () => {
     const { currentTheme, handleThemeChange } = useThemeSettings();
     const { tasaCambio, setTasaCambio, savingParams, handleSaveParams } = useCompanyParams();
+    const {
+        isLoading: profileLoading,
+        form: profileForm, setForm: setProfileForm,
+        saving: savingProfile, handleSaveProfile,
+        passwordForm, setPasswordForm,
+        changingPassword, handleChangePassword,
+        correoVerificado, resending, handleResendVerification,
+    } = useProfile();
 
     return (
         <div className="page-container">
             <div>
                 <h2 className="card-title" style={{ fontSize: '1.5rem' }}>Ajustes del Sistema</h2>
                 <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                    Personaliza la apariencia general de la aplicación, los parámetros operativos y las alertas.
+                    Personaliza la apariencia general de la aplicación y los parámetros operativos.
                 </p>
             </div>
 
             <div className="responsive-grid" style={{ gap: '1.5rem' }}>
+                {/* ── MI PERFIL ── */}
+                <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.25rem' }}>Mi Perfil</h3>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                            Consulta y actualiza tu información personal.
+                        </p>
+                    </div>
+
+                    {profileLoading ? (
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Cargando perfil...</div>
+                    ) : (
+                        <>
+                            {!correoVerificado && profileForm.correo && (
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem',
+                                    padding: '0.65rem 0.9rem', borderRadius: 'var(--radius-md)',
+                                    backgroundColor: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)',
+                                    fontSize: '0.8rem', color: 'var(--accent-warning)',
+                                }}>
+                                    <span>Tu correo aún no está verificado.</span>
+                                    <button
+                                        type="button"
+                                        className="btn"
+                                        onClick={handleResendVerification}
+                                        disabled={resending}
+                                        style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', flexShrink: 0 }}
+                                    >
+                                        {resending ? 'Enviando...' : 'Reenviar'}
+                                    </button>
+                                </div>
+                            )}
+
+                            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label">Nombre</label>
+                                    <input type="text" className="form-input" value={profileForm.nombre}
+                                        onChange={e => setProfileForm(prev => ({ ...prev, nombre: e.target.value }))} />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label">Apellido</label>
+                                    <input type="text" className="form-input" value={profileForm.apellido}
+                                        onChange={e => setProfileForm(prev => ({ ...prev, apellido: e.target.value }))} />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label">Correo electrónico</label>
+                                    <input type="email" className="form-input" value={profileForm.correo}
+                                        onChange={e => setProfileForm(prev => ({ ...prev, correo: e.target.value }))} />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label">Teléfono</label>
+                                    <input type="text" className="form-input" value={profileForm.telefono}
+                                        onChange={e => setProfileForm(prev => ({ ...prev, telefono: e.target.value }))} />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label">URL de foto de perfil</label>
+                                    <input type="text" className="form-input" placeholder="https://..." value={profileForm.fotoperfil}
+                                        onChange={e => setProfileForm(prev => ({ ...prev, fotoperfil: e.target.value }))} />
+                                    {profileForm.fotoperfil && (
+                                        <img
+                                            src={profileForm.fotoperfil}
+                                            alt="Vista previa"
+                                            style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', marginTop: '0.5rem', border: '1px solid var(--border-color)' }}
+                                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                        />
+                                    )}
+                                </div>
+                                <button type="submit" className="btn btn-primary" disabled={savingProfile}
+                                    style={{ fontWeight: 600, fontSize: '0.875rem', width: '100%', height: '44px' }}>
+                                    {savingProfile ? 'Guardando...' : 'Guardar Perfil'}
+                                </button>
+                            </form>
+
+                            <details>
+                                <summary style={{ cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                    Cambiar contraseña
+                                </summary>
+                                <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label className="form-label">Contraseña actual</label>
+                                        <input type="password" className="form-input" value={passwordForm.contrasenaActual}
+                                            onChange={e => setPasswordForm(prev => ({ ...prev, contrasenaActual: e.target.value }))} required />
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label className="form-label">Contraseña nueva</label>
+                                        <input type="password" className="form-input" value={passwordForm.contrasenaNueva}
+                                            onChange={e => setPasswordForm(prev => ({ ...prev, contrasenaNueva: e.target.value }))} required />
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label className="form-label">Confirmar contraseña nueva</label>
+                                        <input type="password" className="form-input" value={passwordForm.confirmarNueva}
+                                            onChange={e => setPasswordForm(prev => ({ ...prev, confirmarNueva: e.target.value }))} required />
+                                    </div>
+                                    <button type="submit" className="btn" disabled={changingPassword}
+                                        style={{ fontWeight: 600, fontSize: '0.875rem', width: '100%', height: '44px' }}>
+                                        {changingPassword ? 'Actualizando...' : 'Cambiar Contraseña'}
+                                    </button>
+                                </form>
+                            </details>
+                        </>
+                    )}
+                </div>
+
                 {/* ── SECCIÓN DE TEMAS ── */}
                 <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     <div>
@@ -122,26 +222,6 @@ const Settings = () => {
                             {savingParams ? 'Guardando Cambios...' : 'Guardar Parámetros'}
                         </button>
                     </form>
-                </div>
-
-                {/* ── SECCIÓN DE ALERTAS ── */}
-                <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', justifyContent: 'flex-start' }}>
-                    <div>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.25rem' }}>Prueba de Alertas</h3>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                            Comprueba cómo lucen las alertas del sistema adaptadas automáticamente al tema visual activo.
-                        </p>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: 'auto', marginBottom: 'auto' }}>
-                        <button
-                            className="btn btn-primary"
-                            onClick={triggerConfirmAlert}
-                            style={{ gap: '0.5rem', fontWeight: 600, fontSize: '0.875rem', width: '100%', height: '44px' }}
-                        >
-                            ⚠️ Disparar Alerta de Prueba
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>

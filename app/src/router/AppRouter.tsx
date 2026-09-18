@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 
 // Pages
 import Login from '../pages/Login';
+import Register from '../pages/Login/Register';
+import VerifyEmail from '../pages/VerifyEmail';
 import Dashboard from '../pages/Dashboard';
 import POS from '../pages/POS';
 import CustomerDisplay from '../pages/CustomerDisplay';
@@ -15,20 +17,18 @@ import Expenses from '../pages/Expenses';
 import Sessions from '../pages/Sessions';
 import Reportes from '../pages/Reportes';
 import Users from '../pages/Users';
+import Roles from '../pages/Roles';
 import Deliveries from '../pages/Deliveries';
 import Settings from '../pages/Settings';
 
 /**
- * Role-based access:
- *   administrador → ALL routes
- *   empleado      → all except /usuarios
- *   invitado      → /dashboard and /pos only
+ * El acceso a cada ruta ya no se decide por un `rol` fijo, sino por los permisos
+ * que trae el usuario autenticado (tabla roles/permisos del backend, ver
+ * AuthContext.hasPermission). Un rol nuevo creado desde /roles queda habilitado
+ * para las rutas correspondientes sin tocar este archivo.
  */
 const AppRouter = () => {
-    const { isAuthenticated, user } = useAuth();
-    const rol = user?.rol;
-    const isAdmin = rol === 'administrador';
-    const isAtLeastEmpleado = rol === 'administrador' || rol === 'empleado';
+    const { isAuthenticated, hasPermission } = useAuth();
 
     const Denied = () => (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '1rem' }}>
@@ -41,11 +41,10 @@ const AppRouter = () => {
 
     return (
         <Routes>
-            {/* Public Route */}
-            <Route
-                path="/login"
-                element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
-            />
+            {/* Rutas públicas */}
+            <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} />
+            <Route path="/register" element={isAuthenticated ? <Navigate to="/" replace /> : <Register />} />
+            <Route path="/verificar-correo/:token" element={<VerifyEmail />} />
 
             {/* Protected Routes encapsulated in MainLayout */}
             <Route element={<ProtectedRoute />}>
@@ -56,22 +55,20 @@ const AppRouter = () => {
                     {/* Default redirect */}
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-                    {/* ALL roles */}
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/pos" element={<POS />} />
+                    <Route path="/dashboard" element={hasPermission('dashboard.ver') ? <Dashboard /> : <Denied />} />
+                    <Route path="/pos" element={hasPermission('pos.ver') ? <POS /> : <Denied />} />
                     <Route path="/settings" element={<Settings />} />
 
-                    {/* Empleado + Admin */}
-                    <Route path="/products" element={isAtLeastEmpleado ? <Products /> : <Denied />} />
-                    <Route path="/sales" element={isAtLeastEmpleado ? <Sales /> : <Denied />} />
-                    <Route path="/purchases" element={isAtLeastEmpleado ? <Purchases /> : <Denied />} />
-                    <Route path="/deliveries" element={isAtLeastEmpleado ? <Deliveries /> : <Denied />} />
+                    <Route path="/products" element={hasPermission('productos.ver') ? <Products /> : <Denied />} />
+                    <Route path="/sales" element={hasPermission('ventas.ver') ? <Sales /> : <Denied />} />
+                    <Route path="/purchases" element={hasPermission('compras.ver') ? <Purchases /> : <Denied />} />
+                    <Route path="/deliveries" element={hasPermission('deliveries.ver') ? <Deliveries /> : <Denied />} />
 
-                    {/* Admin only */}
-                    <Route path="/expenses" element={isAdmin ? <Expenses /> : <Denied />} />
-                    <Route path="/sesiones" element={isAdmin ? <Sessions /> : <Denied />} />
-                    <Route path="/reportes" element={isAdmin ? <Reportes /> : <Denied />} />
-                    <Route path="/usuarios" element={isAdmin ? <Users /> : <Denied />} />
+                    <Route path="/expenses" element={hasPermission('gastos.ver') ? <Expenses /> : <Denied />} />
+                    <Route path="/sesiones" element={hasPermission('sesiones.ver') ? <Sessions /> : <Denied />} />
+                    <Route path="/reportes" element={hasPermission('reportes.ver') ? <Reportes /> : <Denied />} />
+                    <Route path="/usuarios" element={hasPermission('usuarios.ver') ? <Users /> : <Denied />} />
+                    <Route path="/roles" element={hasPermission('roles.ver') ? <Roles /> : <Denied />} />
                 </Route>
             </Route>
 
