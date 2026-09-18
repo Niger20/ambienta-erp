@@ -5,8 +5,8 @@ const ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://localhost:3000',
     'http://localhost:8080',
-    'https://ambienta-erp-production.up.railway.app/'
-    
+    'https://ambienta-erp-production.up.railway.app'
+
 ];
 
 // Permitir inyectar más orígenes desde las variables de entorno de Railway

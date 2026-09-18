@@ -27,4 +27,9 @@ EXPOSE 3000
 # si aún no existe ninguno. Ambos pasos son seguros de re-ejecutar en cada deploy
 # (migrate deploy no reaplica migraciones ya aplicadas; el seed usa upsert y solo
 # crea el admin cuando no hay ninguno).
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run db:seed && npm run start"]
+#
+# Encadenados con ";" (no "&&") a propósito: si migrate/seed fallan (p.ej. la BD
+# ya tenía las tablas creadas a mano y le falta el historial de migraciones),
+# el servidor igual arranca en vez de dejar el contenedor caído por completo.
+# El error queda igual visible en los logs del deploy.
+CMD ["sh", "-c", "npx prisma migrate deploy; npm run db:seed; npm run start"]
