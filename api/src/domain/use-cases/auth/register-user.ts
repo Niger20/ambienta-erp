@@ -35,11 +35,19 @@ export class RegisterUser implements RegisterUserUseCase {
         await this.userRepository.createVerificationToken(user.id, token, 'verificacion_correo', expiracion);
 
         const link = `${this.appBaseUrl}/verificar-correo/${token}`;
-        await this.emailSender.send(
-            dto.correo,
-            'Verifica tu correo — Ambienta ERP',
-            `<p>Hola ${dto.nombre},</p><p>Confirma tu correo para activar tu cuenta en Ambienta ERP:</p><p><a href="${link}">${link}</a></p><p>Este enlace expira en ${TOKEN_TTL_HOURS} horas.</p>`,
-        );
+
+        // La cuenta ya quedó creada arriba: un fallo de SMTP (timeout, host caído,
+        // proveedor bloqueando el puerto, etc.) NO debe tumbar el registro. Se
+        // registra el error y el usuario puede pedir el reenvío desde su perfil.
+        try {
+            await this.emailSender.send(
+                dto.correo,
+                'Verifica tu correo — Ambienta ERP',
+                `<p>Hola ${dto.nombre},</p><p>Confirma tu correo para activar tu cuenta en Ambienta ERP:</p><p><a href="${link}">${link}</a></p><p>Este enlace expira en ${TOKEN_TTL_HOURS} horas.</p>`,
+            );
+        } catch (error) {
+            console.error('[RegisterUser] No se pudo enviar el correo de verificación:', error);
+        }
 
         return user;
     }

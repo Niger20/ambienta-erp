@@ -18,6 +18,11 @@ export class NodemailerAdapter implements EmailSender {
                 port: envs.SMTP_PORT,
                 secure: envs.SMTP_PORT === 465,
                 auth: envs.SMTP_USER ? { user: envs.SMTP_USER, pass: envs.SMTP_PASS } : undefined,
+                // Si el proveedor de hosting bloquea el puerto SMTP saliente, que
+                // falle rápido (segundos) en vez de colgar la petición HTTP.
+                connectionTimeout: 8000,
+                greetingTimeout: 8000,
+                socketTimeout: 8000,
             });
         }
     }
