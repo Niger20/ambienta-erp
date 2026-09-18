@@ -1,19 +1,21 @@
 import cors from 'cors';
+import { envs } from '../../config/envs';
 
-// Orígenes permitidos: añade aquí tu dominio de producción cuando lo tengas
-const ALLOWED_ORIGINS = [
+// Orígenes de desarrollo local: siempre permitidos, no cambian entre despliegues.
+const LOCAL_ORIGINS = [
     'http://localhost:5173',
     'http://localhost:3000',
     'http://localhost:8080',
-    'https://ambienta-erp-production.up.railway.app'
-
 ];
 
-// Permitir inyectar más orígenes desde las variables de entorno de Railway
-if (process.env.ALLOWED_ORIGINS) {
-    const extraOrigins = process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
-    ALLOWED_ORIGINS.push(...extraOrigins);
-}
+// Orígenes de producción (Railway, dominio propio, etc.): se configuran por
+// entorno con ALLOWED_ORIGINS (separados por coma) — nunca hardcodeados aquí,
+// para poder corregir/agregar un dominio sin tocar código ni volver a compilar.
+const extraOrigins = envs.ALLOWED_ORIGINS
+    ? envs.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+    : [];
+
+const ALLOWED_ORIGINS = [...LOCAL_ORIGINS, ...extraOrigins];
 
 export class CorsAdapter {
 
