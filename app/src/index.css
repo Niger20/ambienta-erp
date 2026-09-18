@@ -1,0 +1,15 @@
+@import './styles/base.css';
+@import './styles/root-vars.css';
+@import './styles/theme.css';
+@import './styles/layout.css';
+@import './styles/components.css';
+@import './styles/pos.css';
+@import './styles/customer-display.css';
+@import './styles/responsive.css';
+@import './styles/media-queries.css';
+@import './styles/dashboard.css';
+@import './styles/pos-utilities.css';
+@import './styles/animations.css';
+@import './styles/sweetalert.css';
+@import './styles/cash-calculator.css';
+@import './styles/sessions.css';

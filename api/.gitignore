@@ -1,0 +1,8 @@
+node_modules/
+keys/
+dist/
+.env
+.idea/
+
+/src/generated/prisma
+

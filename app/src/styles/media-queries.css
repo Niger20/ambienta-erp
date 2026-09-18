@@ -1,0 +1,573 @@
+/* =========================================
+   Media Queries — Comprehensive Responsive
+   ========================================= */
+
+/* ── Tablet (≤1024px) ─────────────────── */
+@media (max-width: 1024px) {
+  .header-actions {
+    gap: 1rem;
+  }
+
+  /* Sidebar becomes a drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    transform: translateX(-100%);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    transition: transform var(--transition-normal);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-toggle {
+    display: flex;
+  }
+
+  .layout-container {
+    flex-direction: column;
+  }
+
+  /* Header wraps */
+  .header {
+    height: auto;
+    min-height: 60px;
+    padding: 0.5rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .header-session-widget {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .layout-content {
+    padding: 1.25rem;
+  }
+
+  /* Any two-column grid that uses a fixed px second column → stack */
+  .split-layout-sidebar-400,
+  .split-layout-sidebar-440 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Mobile landscape / small tablet (≤768px) ──────── */
+@media (max-width: 768px) {
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .header-session-widget {
+    flex: 1 1 100%;
+    order: 3;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .header-user {
+    order: 1;
+    gap: 0.75rem;
+  }
+
+  .layout-content {
+    padding: 1rem;
+  }
+
+  .page-container {
+    gap: 1.25rem;
+  }
+
+  /* Auth / Login */
+  .auth-container {
+    max-width: 100%;
+    margin: 4vh 1rem;
+    padding: 0;
+  }
+
+  /* Modals fill more screen */
+  .modal-content {
+    width: 95%;
+    padding: 1.5rem;
+    max-height: 85vh;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+  }
+
+  /* Tables scroll horizontally */
+  .card {
+    overflow-x: auto;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  /* Search inputs with fixed width → fluid */
+  .form-input[style*="width: '300px'"],
+  .form-input[style*="width:'300px'"],
+  div.form-input[style*="300px"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+
+
+  /* POS layout stack */
+  .pos-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* POS Summary → not sticky on tablets */
+  .pos-summary {
+    position: static;
+  }
+
+  /* POS header row → wrap */
+  .pos-header-row {
+    flex-wrap: wrap !important;
+  }
+
+  /* POS scanner/client/lugar top bar → wrap */
+  .pos-topbar {
+    flex-wrap: wrap !important;
+  }
+
+  /* Lugar Venta selector → full width */
+  .pos-lugar-selector {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+}
+
+/* ── Mobile portrait (≤580px) ──────────────────────── */
+@media (max-width: 580px) {
+  .header {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .header-brand {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .header-title h1 {
+    font-size: 1rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .header-session-widget {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .session-status-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .session-amount {
+    font-size: 0.78rem;
+  }
+
+  .btn-close-session,
+  .btn-open-session {
+    flex-shrink: 0;
+  }
+
+  .header-user {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Cards — reduce padding */
+  .card {
+    padding: 1rem;
+  }
+
+  /* Tables — prevent text wrapping so scroll works cleanly */
+  table thead th,
+  table tbody td {
+    white-space: nowrap;
+    padding: 0.65rem 0.5rem !important;
+    font-size: 0.8rem;
+  }
+
+  /* Card headers → stack */
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.75rem;
+  }
+
+  /* Buttons inside card headers → full width */
+  .card-header .btn,
+  .card-header button {
+    width: 100%;
+  }
+
+  /* Page-level card-header (the one with title + action button) */
+  .page-container>.card-header[style] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .page-container>.card-header[style] .btn {
+    width: 100%;
+  }
+
+  /* Page container gap */
+  .page-container {
+    gap: 1rem;
+  }
+
+  /* Layout content minimal padding */
+  .layout-content {
+    padding: 0.75rem;
+  }
+
+  /* ── POS Mobile Optimization ────────────── */
+
+  /* POS page title + buttons → stack */
+  .pos-header-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .pos-header-row>div:last-child {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .pos-header-row .btn {
+    flex: 1;
+    font-size: 0.82rem !important;
+    padding: 0.6rem 0.5rem !important;
+  }
+
+  /* Scanner + Client + LugarVenta bar → stack vertically */
+  .pos-topbar {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Make Lugar Venta dropdown full width on mobile */
+  .pos-lugar-selector {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+  }
+
+  /* Scanner input */
+  .pos-scanner-input {
+    font-size: 0.95rem !important;
+    height: 2.75rem;
+  }
+
+  .pos-scanner-icon {
+    font-size: 1rem;
+    left: 0.75rem;
+  }
+
+  .pos-scanner-input {
+    padding-left: 2.25rem !important;
+  }
+
+  /* POS layout → single column, no gap */
+  .pos-layout {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  /* POS Summary → non-sticky, order last */
+  .pos-summary {
+    position: static !important;
+    order: 2;
+  }
+
+  .pos-summary-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .pos-summary-header h3 {
+    font-size: 1rem;
+  }
+
+  .pos-summary-body {
+    padding: 1rem 1.25rem;
+  }
+
+  .pos-summary-row {
+    font-size: 0.88rem;
+    padding: 0.4rem 0;
+  }
+
+  .pos-summary-total {
+    font-size: 1.2rem;
+  }
+
+  .pos-summary-actions {
+    padding: 0 1.25rem 1.25rem;
+  }
+
+  .pos-btn-charge {
+    padding: 0.85rem 1rem !important;
+    font-size: 1rem !important;
+  }
+
+  /* POS Table Card */
+  .pos-table-card {
+    min-height: auto;
+    padding: 0.75rem !important;
+  }
+
+  .pos-table-card .card-header {
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* POS Table — allow horizontal scroll & tighter cells */
+  .pos-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 0.78rem;
+  }
+
+  .pos-table thead th {
+    padding: 0.5rem 0.4rem;
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+
+  .pos-table tbody td {
+    padding: 0.6rem 0.4rem;
+    white-space: nowrap;
+    font-size: 0.78rem;
+  }
+
+  /* Quantity controls — larger touch targets */
+  .pos-qty-control {
+    border-radius: var(--radius-sm);
+  }
+
+  .pos-qty-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 1.1rem;
+  }
+
+  .pos-qty-input {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 0.85rem;
+  }
+
+  /* Remove button — larger touch target */
+  .pos-remove-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 0.9rem;
+  }
+
+  /* Empty state */
+  .pos-empty {
+    padding: 2.5rem 1rem;
+  }
+
+  .pos-empty-icon {
+    font-size: 2.5rem;
+  }
+
+  /* Barcode badge — smaller */
+  .pos-barcode-badge {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+  }
+
+  /* POS Pantalla Cliente button → hide text, show icon only on very small */
+  .pos-btn-customer {
+    font-size: 0.8rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  /* Payment method selects inside summary */
+  .pos-summary select.form-input,
+  .pos-summary .form-input {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Client selector — tighter on mobile */
+  .pos-topbar .form-input {
+    height: 2.75rem !important;
+  }
+
+  /* Modals */
+  .modal-content {
+    width: 98%;
+    padding: 1.25rem;
+    border-radius: var(--radius-md);
+  }
+
+  /* Auth container */
+  .auth-container {
+    margin: 2vh 0.5rem;
+  }
+
+  .auth-container .card {
+    padding: 1.25rem;
+  }
+
+  /* Sidebar wider on small phones */
+  .sidebar {
+    width: 280px;
+  }
+
+  /* Tab-like button rows → scroll horizontally */
+  .page-container>div[style*="overflowX"] {
+    gap: 0.35rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .page-container>div[style*="overflowX"] .btn {
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  /* Form groups inside modals */
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+}
+
+/* ── Ultra-small screens (≤380px) ──────────────────── */
+@media (max-width: 380px) {
+  .sidebar {
+    width: 100%;
+  }
+
+  .header-title h1 {
+    font-size: 0.9rem;
+  }
+
+  .session-status-badge {
+    font-size: 0.65rem;
+  }
+
+  .session-amount {
+    font-size: 0.72rem;
+  }
+
+  .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .card {
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+  }
+
+  table thead th,
+  table tbody td {
+    font-size: 0.72rem;
+    padding: 0.5rem 0.35rem !important;
+  }
+}
+
+/* Reduced Motion — Emil: fewer and gentler, not zero */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Exception: sidebar width collapse aids spatial comprehension */
+  .sidebar {
+    transition-duration: 150ms !important;
+    transition-property: width, border-color !important;
+  }
+}
+
+/* ── Coarse Pointer / Touch Interface (WCAG Compliance) ── */
+@media (pointer: coarse) {
+
+  /* Scale qty controls to 44px min height/width */
+  .pos-qty-btn {
+    width: 2.75rem !important;
+    /* 44px */
+    height: 2.75rem !important;
+    /* 44px */
+    font-size: 1.25rem !important;
+  }
+
+  .pos-qty-input {
+    width: 3.25rem !important;
+    /* 52px */
+    height: 2.75rem !important;
+    /* 44px */
+    font-size: 1.1rem !important;
+  }
+
+  .pos-remove-btn {
+    width: 2.75rem !important;
+    /* 44px */
+    height: 2.75rem !important;
+    /* 44px */
+    font-size: 1.1rem !important;
+  }
+
+  /* Expand touch target sizes for other compact buttons and list items */
+  .btn {
+    min-height: 2.75rem;
+    padding: 0.75rem 1.5rem;
+  }
+
+  .nav-link {
+    min-height: 2.75rem;
+    padding: 0.85rem 1.25rem;
+  }
+
+  .btn-logout {
+    min-height: 2.5rem;
+  }
+}
+

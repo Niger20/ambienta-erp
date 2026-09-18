@@ -1,0 +1,181 @@
+/* =========================================
+   Sessions Page
+   ========================================= */
+
+.card-header.sessions-header {
+  padding: 0;
+  border: none;
+  margin-bottom: 1.5rem;
+}
+
+.card-title.sessions-title {
+  font-size: 1.5rem;
+}
+
+.sessions-subtitle {
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.card.sessions-card {
+  padding: 0;
+}
+
+.sessions-toolbar {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.card-title.sessions-toolbar-title {
+  margin: 0;
+}
+
+.sessions-toolbar-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.btn.sessions-calc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  background-color: var(--accent-primary-bg);
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary-border);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.form-input.sessions-search-box {
+  display: flex;
+  align-items: center;
+  flex: 1 1 200px;
+  max-width: 300px;
+  padding: 0 12px;
+  gap: 8px;
+  height: 36px;
+}
+
+.sessions-search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  padding: 0;
+}
+
+.sessions-table-wrap {
+  overflow-x: auto;
+}
+
+.sessions-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.sessions-table thead {
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sessions-table th {
+  padding: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.sessions-table th.sessions-th-right {
+  text-align: right;
+}
+
+.sessions-table th.sessions-th-center {
+  text-align: center;
+}
+
+.sessions-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sessions-table td {
+  padding: 1rem;
+}
+
+.sessions-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.sessions-td-muted {
+  color: var(--text-secondary);
+}
+
+.sessions-td-strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.sessions-td-primary {
+  color: var(--text-primary);
+}
+
+.sessions-td-right {
+  text-align: right;
+}
+
+.sessions-td-center {
+  text-align: center;
+}
+
+.sessions-diff {
+  font-weight: 700;
+}
+
+.sessions-diff-positive {
+  color: var(--accent-success);
+}
+
+.sessions-diff-negative {
+  color: var(--accent-danger);
+}
+
+.sessions-diff-neutral {
+  color: var(--text-secondary);
+}
+
+.sessions-action-group {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.btn.sessions-action-btn {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: var(--radius-md);
+}
+
+.btn.sessions-action-btn--pdf {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.btn.sessions-action-btn--excel {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--accent-success-border);
+  color: var(--accent-success);
+}

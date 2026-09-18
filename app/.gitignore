@@ -1,0 +1,122 @@
+# ===========================
+# Dependencies
+# ===========================
+node_modules/
+.pnp
+.pnp.js
+.agents/
+
+# ===========================
+# Build outputs
+# ===========================
+dist/
+dist-ssr/
+build/
+out/
+.output/
+
+# ===========================
+# Logs
+# ===========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+build_errors.txt
+build_output.log
+
+# ===========================
+# Environment variables
+# ===========================
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.staging
+skills-lock.json
+DESIGN.md
+PRODUCT.md
+
+.impeccable/
+
+# ===========================
+# Vite
+# ===========================
+*.local
+vite.config.ts.timestamp-*
+
+# ===========================
+# TypeScript
+# ===========================
+*.tsbuildinfo
+
+# ===========================
+# Cache
+# ===========================
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# ===========================
+# Testing
+# ===========================
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ===========================
+# Editor directories and files
+# ===========================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+.project
+.classpath
+.settings/
+
+# ===========================
+# OS generated files
+# ===========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ===========================
+# Temporary files
+# ===========================
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
+
+# ===========================
+# Package managers
+# ===========================
+# Uncomment the one you DON'T use:
+# package-lock.json  # (if using yarn or pnpm)
+# yarn.lock          # (if using npm or pnpm)
+# pnpm-lock.yaml     # (if using npm or yarn)

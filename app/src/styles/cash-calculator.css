@@ -1,0 +1,553 @@
+/* =========================================
+   Cash Calculator Modal (conteo de efectivo)
+   ========================================= */
+
+.cashcalc-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(16px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    padding: 1.5rem;
+}
+
+.cashcalc-modal {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    box-shadow: 0 35px 70px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    width: 95vw;
+    max-width: 1280px;
+    height: 92vh;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Header ── */
+.cashcalc-header {
+    padding: 1.75rem 2.25rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-dark);
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.cashcalc-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.cashcalc-header-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background-color: var(--accent-primary-bg);
+    border: 1px solid var(--accent-primary-border);
+    color: var(--accent-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cashcalc-title {
+    margin: 0;
+    font-weight: 900;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.cashcalc-subtitle {
+    margin: 0.3rem 0 0 0;
+    font-size: 0.925rem;
+    color: var(--text-secondary);
+}
+
+.cashcalc-stats {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.cashcalc-stat-badge {
+    padding: 0.6rem 1.25rem;
+    border-radius: 14px;
+    font-size: 0.925rem;
+    color: var(--text-secondary);
+    display: flex;
+    gap: 0.65rem;
+    align-items: center;
+}
+
+.cashcalc-stat-badge strong {
+    color: var(--text-primary);
+    font-size: 1.05rem;
+}
+
+.cashcalc-stat-badge--bills {
+    background-color: rgba(59, 130, 246, 0.09);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.cashcalc-stat-badge--coins {
+    background-color: rgba(245, 158, 11, 0.09);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.cashcalc-close-btn {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    width: 44px;
+    height: 44px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.cashcalc-close-btn:hover {
+    background: var(--accent-danger-bg);
+    border-color: var(--accent-danger-border);
+    color: var(--accent-danger);
+}
+
+/* ── Body ── */
+.cashcalc-body {
+    padding: 2rem 2.25rem;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.cashcalc-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.cashcalc-section-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-secondary);
+}
+
+.cashcalc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 1.25rem;
+}
+
+/* ── Billetes ── */
+.cashcalc-bill-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    transition: all 0.2s ease;
+}
+
+.cashcalc-bill-card--active {
+    background-color: rgba(59, 130, 246, 0.07);
+    border: 2px solid var(--accent-primary);
+    box-shadow: 0 8px 22px rgba(59, 130, 246, 0.18);
+}
+
+.cashcalc-bill-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cashcalc-bill-badge {
+    padding: 0.5rem 1.1rem;
+    border-radius: 12px;
+    font-size: 1.15rem;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    background-color: rgba(99, 102, 241, 0.18);
+    color: #818cf8;
+    border: 1.5px solid rgba(129, 140, 248, 0.4);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.cashcalc-bill-badge--high {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.4);
+}
+
+.cashcalc-bill-subtotal {
+    text-align: right;
+    font-weight: 900;
+    font-size: 1.35rem;
+    color: var(--text-secondary);
+    transition: color 0.15s ease;
+}
+
+.cashcalc-bill-subtotal--active {
+    color: var(--accent-primary);
+}
+
+.cashcalc-bill-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.cashcalc-steppers {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.cashcalc-stepper-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    font-weight: 800;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    transition: all 0.15s ease;
+}
+
+.cashcalc-stepper-btn:hover {
+    border-color: var(--accent-primary-border);
+    background-color: var(--accent-primary-bg);
+    color: var(--accent-primary);
+}
+
+.cashcalc-stepper-btn--plus {
+    border-color: var(--accent-primary-border);
+    background-color: var(--accent-primary-bg);
+    color: var(--accent-primary);
+}
+
+.cashcalc-stepper-btn--plus:hover {
+    background-color: var(--accent-primary);
+    color: #ffffff;
+}
+
+.cashcalc-qty-input {
+    width: 96px;
+    height: 50px;
+    text-align: center;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    color: var(--text-primary);
+    font-weight: 900;
+    font-size: 1.35rem;
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.cashcalc-qty-input--active {
+    border: 2px solid var(--accent-primary);
+}
+
+.cashcalc-qty-input--coin {
+    width: 88px;
+    font-size: 1.3rem;
+}
+
+.cashcalc-qty-input--coin.cashcalc-qty-input--active {
+    border-color: var(--accent-warning);
+}
+
+.cashcalc-presets {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.cashcalc-preset-btn {
+    height: 50px;
+    padding: 0 0.85rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cashcalc-preset-btn:hover {
+    border-color: var(--accent-primary-border);
+    color: var(--accent-primary);
+}
+
+/* ── Monedas ── */
+.cashcalc-coin-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    transition: all 0.2s ease;
+}
+
+.cashcalc-coin-card--active {
+    background-color: rgba(245, 158, 11, 0.07);
+    border: 2px solid var(--accent-warning);
+    box-shadow: 0 8px 22px rgba(245, 158, 11, 0.18);
+}
+
+.cashcalc-coin-left {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+}
+
+.cashcalc-coin-badge {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    font-size: 1.15rem;
+    font-weight: 900;
+    background-color: rgba(245, 158, 11, 0.18);
+    color: var(--accent-warning);
+    border: 2px solid var(--accent-warning-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cashcalc-coin-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+
+.cashcalc-coin-subtotal {
+    font-weight: 900;
+    font-size: 1.3rem;
+    color: var(--text-primary);
+}
+
+.cashcalc-coin-subtotal--active {
+    color: var(--accent-warning);
+}
+
+.cashcalc-coin-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cashcalc-stepper-btn--coin-plus {
+    border-color: var(--accent-warning-border);
+    background-color: rgba(245, 158, 11, 0.15);
+    color: var(--accent-warning);
+}
+
+.cashcalc-stepper-btn--coin-plus:hover {
+    background-color: var(--accent-warning);
+    color: #1f1503;
+}
+
+/* ── Dólares ── */
+.cashcalc-usd-section {
+    padding: 1.75rem 2rem;
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.75rem;
+    transition: all 0.2s ease;
+}
+
+.cashcalc-usd-section--active {
+    background-color: rgba(16, 185, 129, 0.09);
+    border: 2px solid var(--accent-success);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.18);
+}
+
+.cashcalc-usd-left {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.cashcalc-usd-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    background-color: var(--accent-success-bg);
+    border: 1px solid var(--accent-success-border);
+    color: var(--accent-success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cashcalc-usd-right {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+}
+
+.cashcalc-usd-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.cashcalc-usd-currency-sign {
+    position: absolute;
+    left: 1.1rem;
+    font-weight: 900;
+    color: var(--accent-success);
+    font-size: 1.35rem;
+    pointer-events: none;
+}
+
+.cashcalc-usd-input {
+    width: 160px;
+    height: 52px;
+    padding-left: 2.6rem;
+    text-align: left;
+    background-color: var(--bg-card);
+    border: 2px solid var(--accent-success-border);
+    border-radius: 14px;
+    color: var(--accent-success);
+    font-weight: 900;
+    font-size: 1.4rem;
+    outline: none;
+}
+
+.cashcalc-usd-total-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 800;
+    text-align: right;
+}
+
+.cashcalc-usd-total-value {
+    text-align: right;
+    font-weight: 900;
+    color: var(--accent-success);
+    font-size: 1.65rem;
+}
+
+/* ── Footer ── */
+.cashcalc-footer {
+    padding: 1.75rem 2.25rem;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-dark);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.75rem;
+}
+
+.cashcalc-footer-label {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    font-weight: 800;
+}
+
+.cashcalc-footer-total {
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: var(--accent-success);
+    line-height: 1.1;
+    margin-top: 0.2rem;
+}
+
+.cashcalc-footer-actions {
+    display: flex;
+    gap: 1.1rem;
+}
+
+.cashcalc-clear-btn {
+    height: 52px;
+    padding: 0 1.5rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    color: var(--text-secondary);
+    font-weight: 800;
+    font-size: 1rem;
+    border-radius: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    transition: all 0.15s ease;
+}
+
+.cashcalc-clear-btn:hover {
+    border-color: var(--accent-danger-border);
+    background-color: var(--accent-danger-bg);
+    color: var(--accent-danger);
+}
+
+.cashcalc-apply-btn {
+    height: 52px;
+    padding: 0 2rem;
+    font-weight: 900;
+    font-size: 1.05rem;
+    border-radius: 14px;
+    background-color: var(--accent-success);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 8px 22px rgba(16, 185, 129, 0.38);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cashcalc-apply-btn:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 10px 26px rgba(16, 185, 129, 0.48);
+}

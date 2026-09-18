@@ -1,0 +1,208 @@
+/* =========================================
+   Theme Overrides
+   ========================================= */
+
+/* Negro */
+[data-theme="negro"] {
+  --bg-dark: #000000;
+  --bg-card: #0d0d0d;
+  --header-bg: rgba(0, 0, 0, 0.75);
+  --bg-hover: #1f1f1f;
+  --border-color: #262626;
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --accent-primary: #ffffff;
+  --accent-hover: #e5e5e5;
+  --accent-contrast: #000000;
+  --accent-primary-bg: rgba(255, 255, 255, 0.1);
+  --accent-primary-border: rgba(255, 255, 255, 0.2);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.6);
+  --shadow-elevated: 0 12px 32px rgba(0, 0, 0, 0.8);
+}
+
+/* Azul Oscuro y Amarillo */
+[data-theme="azul-amarillo"] {
+  --bg-dark: #020817;
+  --bg-card: #0b1329;
+  --header-bg: rgba(11, 19, 41, 0.75);
+  --bg-hover: #1b2644;
+  --border-color: #1e294b;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --accent-primary: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-contrast: #000000;
+  --accent-primary-bg: rgba(245, 158, 11, 0.1);
+  --accent-primary-border: rgba(245, 158, 11, 0.3);
+  --shadow-sm: 0 1px 2px rgba(2, 8, 23, 0.5);
+  --shadow-md: 0 4px 8px rgba(2, 8, 23, 0.6);
+  --shadow-lg: 0 8px 24px rgba(2, 8, 23, 0.7);
+  --shadow-card: 0 1px 3px rgba(2, 8, 23, 0.6);
+  --shadow-elevated: 0 12px 32px rgba(2, 8, 23, 0.8);
+}
+
+/* Todo Rosas */
+[data-theme="rosas"] {
+  --bg-dark: #1b0a14;
+  --bg-card: #2e1022;
+  --header-bg: rgba(46, 16, 34, 0.75);
+  --bg-hover: #451a33;
+  --border-color: #5c2244;
+  --text-primary: #fdf2f8;
+  --text-secondary: #f472b6;
+  --accent-primary: #ec4899;
+  --accent-hover: #db2777;
+  --accent-contrast: #ffffff;
+  --accent-primary-bg: rgba(236, 72, 153, 0.1);
+  --accent-primary-border: rgba(236, 72, 153, 0.3);
+  --shadow-sm: 0 1px 2px rgba(27, 10, 20, 0.5);
+  --shadow-md: 0 4px 8px rgba(27, 10, 20, 0.6);
+  --shadow-lg: 0 8px 24px rgba(27, 10, 20, 0.7);
+  --shadow-card: 0 1px 3px rgba(27, 10, 20, 0.6);
+  --shadow-elevated: 0 12px 32px rgba(27, 10, 20, 0.8);
+}
+
+/* Claro */
+[data-theme="claro"] {
+  --bg-dark: #f8fafc;
+  --bg-card: #ffffff;
+  --header-bg: rgba(255, 255, 255, 0.8);
+  --bg-hover: #f1f5f9;
+  --border-color: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --accent-primary: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-contrast: #ffffff;
+  --accent-primary-bg: rgba(59, 130, 246, 0.08);
+  --accent-primary-border: rgba(59, 130, 246, 0.2);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.1), 0 1px 2px 0 rgba(15, 23, 42, 0.06);
+  --shadow-elevated: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+}
+
+/* Esmeralda Premium */
+[data-theme="esmeralda"] {
+  --bg-dark: #062e24;
+  --bg-card: #0b3c30;
+  --header-bg: rgba(6, 46, 36, 0.8);
+  --bg-hover: #124d3e;
+  --border-color: #175e4c;
+  --text-primary: #ecfdf5;
+  --text-secondary: #6ee7b7;
+  --accent-primary: #10b981;
+  --accent-hover: #059669;
+  --accent-contrast: #ffffff;
+  --accent-primary-bg: rgba(16, 185, 129, 0.12);
+  --accent-primary-border: rgba(16, 185, 129, 0.35);
+  --shadow-sm: 0 1px 2px rgba(6, 46, 36, 0.5);
+  --shadow-md: 0 4px 8px rgba(6, 46, 36, 0.6);
+  --shadow-lg: 0 8px 24px rgba(6, 46, 36, 0.7);
+  --shadow-card: 0 1px 3px rgba(6, 46, 36, 0.6);
+  --shadow-elevated: 0 12px 32px rgba(6, 46, 36, 0.8);
+}
+
+/* Atardecer (Sunset) */
+[data-theme="sunset"] {
+  --bg-dark: #1a0f1d;
+  --bg-card: #29162e;
+  --header-bg: rgba(26, 15, 29, 0.8);
+  --bg-hover: #3d2044;
+  --border-color: #52295c;
+  --text-primary: #fff7ed;
+  --text-secondary: #fdba74;
+  --accent-primary: #f97316;
+  --accent-hover: #ea580c;
+  --accent-contrast: #ffffff;
+  --accent-primary-bg: rgba(249, 115, 22, 0.12);
+  --accent-primary-border: rgba(249, 115, 22, 0.35);
+  --shadow-sm: 0 1px 2px rgba(26, 15, 29, 0.5);
+  --shadow-md: 0 4px 8px rgba(26, 15, 29, 0.6);
+  --shadow-lg: 0 8px 24px rgba(26, 15, 29, 0.7);
+  --shadow-card: 0 1px 3px rgba(26, 15, 29, 0.6);
+  --shadow-elevated: 0 12px 32px rgba(26, 15, 29, 0.8);
+}
+
+/* Océano Profundo */
+[data-theme="oceano"] {
+  --bg-dark: #031926;
+  --bg-card: #082c3d;
+  --header-bg: rgba(3, 25, 38, 0.8);
+  --bg-hover: #0e3f56;
+  --border-color: #15526e;
+  --text-primary: #f0f9ff;
+  --text-secondary: #67e8f9;
+  --accent-primary: #06b6d4;
+  --accent-hover: #0891b2;
+  --accent-contrast: #ffffff;
+  --accent-primary-bg: rgba(6, 182, 212, 0.12);
+  --accent-primary-border: rgba(6, 182, 212, 0.35);
+  --shadow-sm: 0 1px 2px rgba(3, 25, 38, 0.5);
+  --shadow-md: 0 4px 8px rgba(3, 25, 38, 0.6);
+  --shadow-lg: 0 8px 24px rgba(3, 25, 38, 0.7);
+  --shadow-card: 0 1px 3px rgba(3, 25, 38, 0.6);
+  --shadow-elevated: 0 12px 32px rgba(3, 25, 38, 0.8);
+}
+
+/* Cyberpunk Neón */
+[data-theme="cyberpunk"] {
+  --bg-dark: #0d021a;
+  --bg-card: #1c0536;
+  --header-bg: rgba(13, 2, 26, 0.85);
+  --bg-hover: #2e0957;
+  --border-color: #4a0e82;
+  --text-primary: #f7f0ff;
+  --text-secondary: #c084fc;
+  --accent-primary: #a855f7;
+  --accent-hover: #9333ea;
+  --accent-contrast: #ffffff;
+  --accent-primary-bg: rgba(168, 85, 247, 0.15);
+  --accent-primary-border: rgba(168, 85, 247, 0.4);
+  --shadow-sm: 0 1px 2px rgba(13, 2, 26, 0.6);
+  --shadow-md: 0 4px 10px rgba(168, 85, 247, 0.2);
+  --shadow-lg: 0 8px 26px rgba(168, 85, 247, 0.3);
+  --shadow-card: 0 1px 4px rgba(13, 2, 26, 0.7);
+  --shadow-elevated: 0 12px 36px rgba(168, 85, 247, 0.4);
+}
+
+/* Café Arábica */
+[data-theme="cafe"] {
+  --bg-dark: #1c130e;
+  --bg-card: #2b1d16;
+  --header-bg: rgba(28, 19, 14, 0.8);
+  --bg-hover: #3e2b21;
+  --border-color: #543b2d;
+  --text-primary: #fef3c7;
+  --text-secondary: #fde68a;
+  --accent-primary: #d97706;
+  --accent-hover: #b45309;
+  --accent-contrast: #ffffff;
+  --accent-primary-bg: rgba(217, 119, 6, 0.12);
+  --accent-primary-border: rgba(217, 119, 6, 0.35);
+  --shadow-sm: 0 1px 2px rgba(28, 19, 14, 0.5);
+  --shadow-md: 0 4px 8px rgba(28, 19, 14, 0.6);
+  --shadow-lg: 0 8px 24px rgba(28, 19, 14, 0.7);
+  --shadow-card: 0 1px 3px rgba(28, 19, 14, 0.6);
+  --shadow-elevated: 0 12px 32px rgba(28, 19, 14, 0.8);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+

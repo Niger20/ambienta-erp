@@ -1,0 +1,680 @@
+-- =====================================================================
+-- AmbientaBD - Script de creación de base de datos
+-- =====================================================================
+-- Mantiene la línea de diseño original:
+--   * PK: INT GENERATED ALWAYS AS IDENTITY
+--   * Montos: DECIMAL(10,2)
+--   * FOREIGN KEY declaradas al final de cada tabla
+--   * TIMESTAMP DEFAULT CURRENT_TIMESTAMP para fechas de registro
+--
+-- NOTA DE EJECUCIÓN:
+--   - Si usas psql: pega todo el script tal cual, el \c hace el cambio
+--     de base de datos automáticamente.
+--   - Si usas pgAdmin (Query Tool): ejecuta primero solo la línea
+--     CREATE DATABASE, luego conéctate a AmbientaBD desde el árbol de
+--     bases de datos y corre el resto en un Query Tool nuevo (pgAdmin
+--     no entiende \c).
+-- =====================================================================
+
+CREATE DATABASE "AmbientaBD";
+\c "AmbientaBD"
+
+-- =====================================================================
+-- REQUISITO 1: Productos especiales (caja, pieza, metro, etc.)
+-- =====================================================================
+-- Se crea un catálogo de unidades de medida en vez de un ENUM fijo,
+-- para que puedas agregar nuevas unidades sin tocar el esquema.
+-- PermiteFraccionamiento indica si esa unidad admite decimales
+-- (ej. "Metro" = 2.5 mt sí tiene sentido, "Caja" normalmente no).
+--
+-- IMPACTO EN EL RESTO DEL DISEÑO: para que "vender por metro" sea
+-- real, las columnas de cantidad y stock que eran INT pasan a
+-- DECIMAL(10,2) en Productos, VentaProductos, ComprasProductos y
+-- MovimientosInventario. Es el único cambio de tipo que se propaga
+-- a varias tablas; lo marco explícitamente para tu auditoría.
+CREATE TABLE UnidadesMedida (
+    UnidadMedidaID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Nombre VARCHAR(50) NOT NULL UNIQUE,
+    Abreviatura VARCHAR(10) NOT NULL,
+    PermiteFraccionamiento BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+INSERT INTO UnidadesMedida (Nombre, Abreviatura, PermiteFraccionamiento) VALUES
+('Unidad', 'UND', FALSE),
+('Caja', 'CJA', FALSE),
+('Metro', 'MT', TRUE),
+('Kilogramo', 'KG', TRUE),
+('Libra', 'LB', TRUE);
+
+
+CREATE TABLE CategoriasProductos (
+    CategoriaID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    Descripcion TEXT
+);
+
+CREATE TABLE Usuarios (
+    UsuarioID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    NombreUsuario VARCHAR(50) NOT NULL UNIQUE,
+    ContrasenaHash VARCHAR(255) NOT NULL,
+    FechaRegistro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- REQUISITO 18: espacio para el logo de la empresa.
+-- Se guarda la URL/ruta del archivo (no el binario), que es la
+-- práctica recomendada: la imagen vive en disco/S3/CDN y la BD solo
+-- referencia dónde está.
+CREATE TABLE Empresa (
+    EmpresaID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    NombreEmpresa VARCHAR(100),
+    Direccion TEXT,
+    Telefono VARCHAR(15),
+    RUC VARCHAR(50),
+    LogoURL VARCHAR(255)
+);
+
+CREATE TABLE Gastos (
+    GastoID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    UsuarioID INT NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    Descripcion TEXT,
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+);
+
+CREATE TABLE Repartidores (
+    RepartidorID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    Telefono VARCHAR(15)
+);
+
+CREATE TABLE Sesiones (
+    SesionID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    UsuarioID INT NOT NULL,
+    FechaInicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FechaFin TIMESTAMP,
+    MontoInicial DECIMAL(10, 2) NOT NULL,
+    MontoFinalSistema DECIMAL(10, 2),
+    MontoFinalFisico DECIMAL(10, 2),
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+);
+
+-- REQUISITO 12: categorías de clientes en tabla aparte (no ENUM),
+-- para que puedas crear nuevas categorías sin migrar el esquema.
+CREATE TABLE CategoriasClientes (
+    CategoriaClienteID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Nombre VARCHAR(50) NOT NULL UNIQUE,
+    Descripcion TEXT,
+    PorcentajeDescuento DECIMAL(5, 2) DEFAULT 0
+);
+
+INSERT INTO CategoriasClientes (Nombre, Descripcion) VALUES
+('Regular', 'Cliente estándar sin condiciones especiales'),
+('Frecuente', 'Cliente con compras recurrentes'),
+('Mayorista', 'Cliente que compra al por mayor'),
+('VIP', 'Cliente de alto valor con beneficios especiales');
+
+-- REQUISITO 13: cédula o RUC del cliente.
+-- TipoCliente distingue persona natural (cédula) vs jurídica (RUC).
+CREATE TABLE Clientes (
+    ClienteID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    CategoriaClienteID INT,
+    Nombre VARCHAR(100) NOT NULL,
+    TipoCliente VARCHAR(20) NOT NULL DEFAULT 'NATURAL' CHECK (TipoCliente IN ('NATURAL','JURIDICO')),
+    Cedula VARCHAR(20) UNIQUE,
+    RUC VARCHAR(20) UNIQUE,
+    Telefono VARCHAR(15),
+    Direccion TEXT,
+    UbicacionGeografica VARCHAR(255),
+    LimiteCredito DECIMAL(10, 2),
+    FOREIGN KEY (CategoriaClienteID) REFERENCES CategoriasClientes(CategoriaClienteID),
+);
+
+CREATE TABLE Proveedores (
+    ProveedorID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    NombreEmpresa VARCHAR(100) NOT NULL,
+    AsesorVentas VARCHAR(100) NOT NULL,
+    Telefono VARCHAR(15),
+    Direccion TEXT,
+    UbicacionGeografica VARCHAR(255),
+    Clasificacion VARCHAR(50)
+);
+
+-- REQUISITOS 1, 2, 6 combinados en Productos:
+--   - UnidadMedidaID: unidad especial de venta (req. 1)
+--   - PrecioMayoreo / CantidadMinimaMayoreo: precio y condición de
+--     mayoreo (req. 2). El CHECK obliga a que ambos vengan juntos o
+--     ninguno, para que no quede un precio de mayoreo sin condición.
+--   - RequiereFechaVencimiento: booleano para decidir si ese producto
+--     controla vencimiento o no (req. 6). El CHECK obliga a llenar
+--     FechaVencimiento solo cuando el producto lo requiere.
+--   - PublicadoEnCatalogo: para el catálogo web (req. 3), permite
+--     decidir qué productos se muestran en la tienda en línea.
+CREATE TABLE Productos (
+    ProductoID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    CodigoBarra VARCHAR(50) UNIQUE,
+    CategoriaID INT,
+    UnidadMedidaID INT NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    Descripcion TEXT,
+    PrecioCompra DECIMAL(10, 2) NOT NULL,
+    PrecioVenta DECIMAL(10, 2) NOT NULL,
+    Utilidad DECIMAL(10, 2) GENERATED ALWAYS AS (PrecioVenta - PrecioCompra) STORED,
+    PrecioMayoreo DECIMAL(10, 2),
+    CantidadMinimaMayoreo DECIMAL(10, 2),
+    StockMinimo DECIMAL(10, 2) DEFAULT 0 CHECK (StockMinimo >= 0),
+    StockActual DECIMAL(10, 2) DEFAULT 0 CHECK (StockActual >= 0),
+    RequiereFechaVencimiento BOOLEAN NOT NULL DEFAULT FALSE,
+    FechaVencimiento DATE,
+    PublicadoEnCatalogo BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (CategoriaID) REFERENCES CategoriasProductos(CategoriaID),
+    FOREIGN KEY (UnidadMedidaID) REFERENCES UnidadesMedida(UnidadMedidaID),
+    CONSTRAINT chk_precio_mayoreo CHECK (
+        (PrecioMayoreo IS NULL AND CantidadMinimaMayoreo IS NULL) OR
+        (PrecioMayoreo IS NOT NULL AND CantidadMinimaMayoreo IS NOT NULL)
+    ),
+    CONSTRAINT chk_fecha_vencimiento CHECK (
+        RequiereFechaVencimiento = FALSE OR FechaVencimiento IS NOT NULL
+    )
+);
+
+-- REQUISITO 3: catálogo web necesita imágenes. Se usa una tabla
+-- aparte (1 producto -> N imágenes) en vez de una sola columna,
+-- para poder mostrar galería en la ficha del producto y marcar cuál
+-- es la principal para el listado del catálogo.
+CREATE TABLE ImagenesProductos (
+    ImagenID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    ProductoID INT NOT NULL,
+    URLImagen VARCHAR(255) NOT NULL,
+    EsPrincipal BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (ProductoID) REFERENCES Productos(ProductoID)
+);
+
+CREATE TABLE Deliveries (
+    DeliveryID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    RepartidorID INT NOT NULL,
+    Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    DireccionEntrega TEXT NOT NULL,
+    Costo DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (RepartidorID) REFERENCES Repartidores(RepartidorID)
+);
+
+
+-- =====================================================================
+-- REQUISITO 4: consecutivo de factura opcional (fiscal / no fiscal)
+-- =====================================================================
+-- Dos secuencias independientes: una para "F" (fiscal) y otra para
+-- "S" (no fiscal). Un trigger asigna el consecutivo correcto según
+-- Ventas.TipoFactura al momento de insertar. Si TipoFactura queda en
+-- NULL, la venta no lleva ningún consecutivo (totalmente opcional).
+CREATE SEQUENCE consecutivo_fiscal_seq START 1;
+CREATE SEQUENCE consecutivo_no_fiscal_seq START 1;
+
+-- REQUISITOS 4, 10 en Ventas:
+--   - TipoFactura / ConsecutivoFiscal / ConsecutivoNoFiscal (req. 4)
+--   - DescuentoFactura: descuento por monto a nivel de factura
+--     completa (req. 10, la parte "por factura"). El descuento por
+--     producto ya existía en VentaProductos.Descuento (se mantiene).
+-- NOTA: se quitó la columna MetodoPago de Ventas, porque ahora el
+-- detalle de pago (y los pagos mixtos) vive en la tabla VentaPagos
+-- que se crea más abajo (requisitos 8 y 9).
+CREATE TABLE Ventas (
+    VentaID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    ClienteID INT,
+    SesionID INT NOT NULL,
+    Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Total DECIMAL(10, 2) NOT NULL,
+    DescuentoFactura DECIMAL(10, 2) NOT NULL DEFAULT 0 CHECK (DescuentoFactura >= 0),
+    TipoVenta VARCHAR(50) NOT NULL CHECK (TipoVenta IN ('CREDITO','CONTADO')),
+    LugarVenta VARCHAR(50) NOT NULL CHECK (LugarVenta IN ('NORMAL','DELIVERY')),
+    TipoFactura VARCHAR(20) CHECK (TipoFactura IN ('FISCAL','NO_FISCAL')),
+    ConsecutivoFiscal VARCHAR(20) UNIQUE,
+    ConsecutivoNoFiscal VARCHAR(20) UNIQUE,
+    Estado BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID),
+    FOREIGN KEY (SesionID) REFERENCES Sesiones(SesionID),
+    CONSTRAINT chk_consecutivo_exclusivo CHECK (
+        NOT (ConsecutivoFiscal IS NOT NULL AND ConsecutivoNoFiscal IS NOT NULL)
+    )
+);
+
+CREATE OR REPLACE FUNCTION fn_asignar_consecutivo_venta()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.TipoFactura = 'FISCAL' AND NEW.ConsecutivoFiscal IS NULL THEN
+        NEW.ConsecutivoFiscal := 'F' || LPAD(nextval('consecutivo_fiscal_seq')::TEXT, 6, '0');
+    ELSIF NEW.TipoFactura = 'NO_FISCAL' AND NEW.ConsecutivoNoFiscal IS NULL THEN
+        NEW.ConsecutivoNoFiscal := 'S' || LPAD(nextval('consecutivo_no_fiscal_seq')::TEXT, 6, '0');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_asignar_consecutivo_venta
+BEFORE INSERT ON Ventas
+FOR EACH ROW
+EXECUTE FUNCTION fn_asignar_consecutivo_venta();
+
+
+CREATE TABLE VentaDelivery (
+    VentaID INT NOT NULL,
+    DeliveryID INT NOT NULL,
+    PRIMARY KEY (VentaID, DeliveryID),
+    FOREIGN KEY (VentaID) REFERENCES Ventas(VentaID),
+    FOREIGN KEY (DeliveryID) REFERENCES Deliveries(DeliveryID)
+);
+
+-- Cantidad pasa de INT a DECIMAL(10,2) por el requisito 1 (unidades
+-- fraccionables como "metro"). Descuento por producto (req. 10) ya
+-- existía en tu diseño original, se mantiene igual.
+CREATE TABLE VentaProductos (
+    VentaID INT NOT NULL,
+    ProductoID INT NOT NULL,
+    Cantidad DECIMAL(10, 2) NOT NULL CHECK (Cantidad > 0),
+    PrecioUnitario DECIMAL(10, 2) NOT NULL,
+    Descuento DECIMAL(10, 2) DEFAULT 0 CHECK (Descuento >= 0),
+    TotalProducto DECIMAL(10, 2) GENERATED ALWAYS AS ((PrecioUnitario * Cantidad) - Descuento) STORED,
+    PRIMARY KEY (VentaID, ProductoID),
+    FOREIGN KEY (VentaID) REFERENCES Ventas(VentaID),
+    FOREIGN KEY (ProductoID) REFERENCES Productos(ProductoID)
+);
+
+-- =====================================================================
+-- REQUISITOS 8 y 9: métodos de pago y ventas mixtas
+-- =====================================================================
+-- Decisión de diseño (para tu auditoría): en vez de simular la venta
+-- mixta con una CuentaPorCobrar temporal + dos Abonos (como
+-- planteaste), se usa una tabla de detalle de pago por venta. Una
+-- venta puede tener 1 o varias filas en VentaPagos, cada una con su
+-- propio método; la suma de Monto debe coincidir con el Total de la
+-- venta (esa validación de suma se recomienda hacerla en la app o con
+-- un trigger adicional si quieres forzarla a nivel de BD).
+-- Ventajas sobre la cuenta por cobrar temporal:
+--   - CuentasPorCobrar queda limpia solo para crédito real (deuda
+--     pendiente), no se mezcla con pagos de contado divididos.
+--   - No hay que "cerrar" artificialmente una cuenta con 2 abonos
+--     inmediatos solo para registrar un pago mixto de contado.
+-- Los CHECK obligan Banco en tarjeta/transferencia, y número de
+-- transferencia solo en transferencia.
+CREATE TABLE VentaPagos (
+    VentaPagoID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    VentaID INT NOT NULL,
+    MetodoPago VARCHAR(20) NOT NULL CHECK (MetodoPago IN ('EFECTIVO','TARJETA','TRANSFERENCIA')),
+    Monto DECIMAL(10, 2) NOT NULL CHECK (Monto > 0),
+    Banco VARCHAR(100),
+    NumeroTransferencia VARCHAR(50),
+    FOREIGN KEY (VentaID) REFERENCES Ventas(VentaID),
+    CONSTRAINT chk_banco_requerido CHECK (
+        (MetodoPago = 'EFECTIVO' AND Banco IS NULL) OR
+        (MetodoPago IN ('TARJETA','TRANSFERENCIA') AND Banco IS NOT NULL)
+    ),
+    CONSTRAINT chk_numero_transferencia CHECK (
+        (MetodoPago = 'TRANSFERENCIA' AND NumeroTransferencia IS NOT NULL) OR
+        (MetodoPago <> 'TRANSFERENCIA' AND NumeroTransferencia IS NULL)
+    )
+);
+
+-- Se mantiene tal cual tu diseño original: sigue siendo la cuenta por
+-- cobrar real para TipoVenta = 'CREDITO'.
+CREATE TABLE CuentasPorCobrar (
+    CuentaID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    VentaID INT NOT NULL,
+    ClienteId INT NOT NULL,
+    MontoTotal DECIMAL(10, 2) NOT NULL,
+    MontoPagado DECIMAL(10, 2) DEFAULT 0,
+    MontoRestante DECIMAL(10, 2) GENERATED ALWAYS AS (MontoTotal - MontoPagado) STORED,
+    FechaVencimiento DATE NOT NULL,
+    Estado VARCHAR(50) NOT NULL CHECK (Estado IN ('PENDIENTE','PAGADO','VENCIDO')),
+    FOREIGN KEY (VentaID) REFERENCES Ventas(VentaID),
+    FOREIGN KEY (ClienteId) REFERENCES Clientes(ClienteID)
+);
+
+CREATE TABLE Abonos(
+    AbonoID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    CuentaID INT NOT NULL,
+    Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Monto DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (CuentaID) REFERENCES CuentasPorCobrar(CuentaID)
+);
+
+-- =====================================================================
+-- REQUISITO 11: devoluciones
+-- =====================================================================
+-- Tabla completamente nueva, como pediste. La FK compuesta apunta a
+-- VentaProductos (VentaID, ProductoID) para garantizar que solo se
+-- pueda devolver algo que realmente se vendió en esa factura.
+-- UsuarioID registra quién procesó la devolución (esto además
+-- alimenta la auditoría del requisito 5).
+CREATE TABLE Devoluciones (
+    DevolucionID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    VentaID INT NOT NULL,
+    ProductoID INT NOT NULL,
+    Cantidad DECIMAL(10, 2) NOT NULL CHECK (Cantidad > 0),
+    Motivo TEXT NOT NULL,
+    MontoDevuelto DECIMAL(10, 2) NOT NULL CHECK (MontoDevuelto >= 0),
+    Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UsuarioID INT NOT NULL,
+    FOREIGN KEY (VentaID, ProductoID) REFERENCES VentaProductos(VentaID, ProductoID),
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+);
+
+-- =====================================================================
+-- REQUISITO 7: número de lote + corrección de bug + tipo MERMA
+-- =====================================================================
+-- Se agregó NumeroLote. Se reordenó StockAnterior antes de
+-- StockResultante y se agregó STORED (faltaba en tu script original).
+-- Se agregó 'MERMA' y 'DEVOLUCION' como tipos de movimiento válidos.
+CREATE TABLE MovimientosInventario (
+    MovimientoID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    ProductoID INT NOT NULL,
+    TipoMovimiento VARCHAR(50) NOT NULL CHECK (TipoMovimiento IN ('INGRESO','EGRESO','AJUSTE','MERMA','DEVOLUCION')),
+    Cantidad DECIMAL(10, 2) NOT NULL,
+    NumeroLote VARCHAR(50),
+    StockAnterior DECIMAL(10, 2) NOT NULL,
+    StockResultante DECIMAL(10, 2) GENERATED ALWAYS AS (StockAnterior + Cantidad) STORED,
+    Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Motivo TEXT,
+    FOREIGN KEY (ProductoID) REFERENCES Productos(ProductoID)
+);
+
+-- =====================================================================
+-- REQUISITO 17: mermas como pérdida
+-- =====================================================================
+-- MovimientoID queda nullable porque lo llena automáticamente el
+-- trigger de abajo (no lo llena la app): al insertar una Merma, el
+-- trigger crea el movimiento de inventario tipo 'MERMA', descuenta el
+-- stock del producto y enlaza el movimiento resultante. Así te
+-- aseguras de que nunca quede una merma registrada sin su respectivo
+-- descuento de stock (evita inconsistencias por olvido de la app).
+-- CostoPerdida se calcula solo, para que esto alimente directamente
+-- tu reporte de utilidades.
+CREATE TABLE Mermas (
+    MermaID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    ProductoID INT NOT NULL,
+    Cantidad DECIMAL(10, 2) NOT NULL CHECK (Cantidad > 0),
+    CostoUnitario DECIMAL(10, 2) NOT NULL,
+    CostoPerdida DECIMAL(10, 2) GENERATED ALWAYS AS (Cantidad * CostoUnitario) STORED,
+    Motivo TEXT NOT NULL,
+    Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UsuarioID INT NOT NULL,
+    MovimientoID INT,
+    FOREIGN KEY (ProductoID) REFERENCES Productos(ProductoID),
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID),
+    FOREIGN KEY (MovimientoID) REFERENCES MovimientosInventario(MovimientoID)
+);
+
+CREATE OR REPLACE FUNCTION fn_registrar_movimiento_merma()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_stock_actual DECIMAL(10, 2);
+    v_movimiento_id INT;
+BEGIN
+    SELECT StockActual INTO v_stock_actual FROM Productos WHERE ProductoID = NEW.ProductoID;
+
+    INSERT INTO MovimientosInventario (ProductoID, TipoMovimiento, Cantidad, StockAnterior, Motivo)
+    VALUES (NEW.ProductoID, 'MERMA', -NEW.Cantidad, v_stock_actual, 'Merma: ' || NEW.Motivo)
+    RETURNING MovimientoID INTO v_movimiento_id;
+
+    UPDATE Productos SET StockActual = StockActual - NEW.Cantidad WHERE ProductoID = NEW.ProductoID;
+
+    UPDATE Mermas SET MovimientoID = v_movimiento_id WHERE MermaID = NEW.MermaID;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_merma_movimiento
+AFTER INSERT ON Mermas
+FOR EACH ROW EXECUTE FUNCTION fn_registrar_movimiento_merma();
+
+
+CREATE TABLE MovimientoVentas (
+    MovimeintoVentaID INT NOT NULL,
+    VentaID INT NOT NULL,
+    PRIMARY KEY (MovimeintoVentaID, VentaID),
+    FOREIGN KEY (VentaID) REFERENCES Ventas(VentaID),
+    FOREIGN KEY (MovimeintoVentaID) REFERENCES MovimientosInventario(MovimientoID)
+);
+
+-- =====================================================================
+-- REQUISITO 14: orden de compra / recepción antes de la factura
+-- =====================================================================
+-- OrdenesCompra representa el pedido hecho al proveedor (aún sin
+-- llegar físicamente). Compras (ya existía en tu diseño) sigue siendo
+-- la recepción/factura real, y ahora referencia opcionalmente la
+-- orden que le dio origen, para poder comparar lo pedido vs lo
+-- recibido.
+CREATE TABLE OrdenesCompra (
+    OrdenCompraID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    ProveedorID INT NOT NULL,
+    FechaOrden TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FechaEsperada DATE,
+    Estado VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE' CHECK (Estado IN ('PENDIENTE','RECIBIDA_PARCIAL','RECIBIDA_TOTAL','CANCELADA')),
+    FOREIGN KEY (ProveedorID) REFERENCES Proveedores(ProveedorID)
+);
+
+CREATE TABLE OrdenesCompraProductos (
+    OrdenCompraID INT NOT NULL,
+    ProductoID INT NOT NULL,
+    CantidadOrdenada DECIMAL(10, 2) NOT NULL CHECK (CantidadOrdenada > 0),
+    PrecioUnitario DECIMAL(10, 2) NOT NULL,
+    PRIMARY KEY (OrdenCompraID, ProductoID),
+    FOREIGN KEY (OrdenCompraID) REFERENCES OrdenesCompra(OrdenCompraID),
+    FOREIGN KEY (ProductoID) REFERENCES Productos(ProductoID)
+);
+
+CREATE TABLE Compras (
+    CompraID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    ProveedorID INT NOT NULL,
+    OrdenCompraID INT,
+    Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Total DECIMAL(10, 2) NOT NULL,
+    MetodoPago VARCHAR(50) NOT NULL,
+    TipoCompra VARCHAR(50) NOT NULL CHECK (TipoCompra IN ('CREDITO','CONTADO')),
+    Estado BOOLEAN NOT NULL DEFAULT TRUE,
+    FacturaProveedor VARCHAR(100),
+    FOREIGN KEY (ProveedorID) REFERENCES Proveedores(ProveedorID),
+    FOREIGN KEY (OrdenCompraID) REFERENCES OrdenesCompra(OrdenCompraID)
+);
+
+-- Se agregó NumeroLote (requisito 7, del lado de compras: aquí es
+-- donde normalmente ingresa el lote físico).
+CREATE TABLE ComprasProductos (
+    CompraID INT NOT NULL,
+    ProductoID INT NOT NULL,
+    Cantidad DECIMAL(10, 2) NOT NULL CHECK (Cantidad > 0),
+    PrecioUnitario DECIMAL(10, 2) NOT NULL,
+    Descuento DECIMAL(10, 2) DEFAULT 0,
+    TotalProducto DECIMAL(10, 2) GENERATED ALWAYS AS ((PrecioUnitario * Cantidad) - Descuento) STORED,
+    NumeroLote VARCHAR(50),
+    PRIMARY KEY (CompraID, ProductoID),
+    FOREIGN KEY (CompraID) REFERENCES Compras(CompraID),
+    FOREIGN KEY (ProductoID) REFERENCES Productos(ProductoID)
+);
+
+-- REQUISITO 15: costos adicionales de compra (flete, aduana, etc.)
+-- Tabla 1-N: una compra puede tener varios costos adicionales.
+CREATE TABLE CostosAdicionalesCompras (
+    CostoAdicionalID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    CompraID INT NOT NULL,
+    Concepto VARCHAR(100) NOT NULL,
+    Monto DECIMAL(10, 2) NOT NULL CHECK (Monto >= 0),
+    FOREIGN KEY (CompraID) REFERENCES Compras(CompraID)
+);
+
+CREATE TABLE MovimientosCompras (
+    MovimientoCompraID INT NOT NULL,
+    CompraID INT NOT NULL,
+    PRIMARY KEY (MovimientoCompraID, CompraID),
+    FOREIGN KEY (CompraID) REFERENCES Compras(CompraID),
+    FOREIGN KEY (MovimientoCompraID) REFERENCES MovimientosInventario(MovimientoID)
+);
+
+CREATE TABLE CuentasPorPagar (
+    CuentaPagarID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    CompraID INT NOT NULL,
+    MontoTotal DECIMAL(10, 2) NOT NULL,
+    MontoPagado DECIMAL(10, 2) DEFAULT 0,
+    MontoRestante DECIMAL(10, 2) GENERATED ALWAYS AS (MontoTotal - MontoPagado) STORED,
+    Cuotas INT,
+    MontoCuota DECIMAL(10, 2),
+    FechaCuota INT,
+    FechaVencimiento DATE NOT NULL,
+    Estado VARCHAR(50) NOT NULL CHECK (Estado IN ('PENDIENTE','PAGADO','VENCIDO')),
+    FOREIGN KEY (CompraID) REFERENCES Compras(CompraID)
+);
+
+CREATE TABLE Pagos(
+    PagoID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Monto DECIMAL(10, 2) NOT NULL
+);
+
+CREATE TABLE PagoCuentasPorPagar (
+    PagoID INT NOT NULL,
+    CuentaPagarID INT NOT NULL,
+    PRIMARY KEY (PagoID, CuentaPagarID),
+    FOREIGN KEY (PagoID) REFERENCES Pagos(PagoID),
+    FOREIGN KEY (CuentaPagarID) REFERENCES CuentasPorPagar(CuentaPagarID)
+);
+
+CREATE TABLE PagoGastos (
+    PagoID INT NOT NULL,
+    GastoID INT NOT NULL,
+    PRIMARY KEY (PagoID, GastoID),
+    FOREIGN KEY (PagoID) REFERENCES Pagos(PagoID),
+    FOREIGN KEY (GastoID) REFERENCES Gastos(GastoID)
+);
+
+-- =====================================================================
+-- REQUISITO 16: planilla / empleados
+-- =====================================================================
+-- ADVERTENCIA (tal como tú mismo anticipaste): esto es una base
+-- razonable, NO un módulo de nómina completo según ley laboral de
+-- Nicaragua. Cubre lo estructural (INSS laboral, IR, tipo de
+-- contratación planilla vs. servicios profesionales) pero conceptos
+-- como vacaciones acumuladas, treceavo mes (aguinaldo) e
+-- indemnización por antigüedad normalmente necesitan sus propias
+-- tablas de acumulación porque no son "un monto del mes", sino saldos
+-- que crecen con el tiempo. Te recomiendo que revisemos esto en una
+-- conversación aparte, dedicada solo a planilla.
+CREATE TABLE Empleados (
+    EmpleadoID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    Cedula VARCHAR(20) NOT NULL UNIQUE,
+    Cargo VARCHAR(100) NOT NULL,
+    TipoContrato VARCHAR(30) NOT NULL CHECK (TipoContrato IN ('PLANILLA','SERVICIOS_PROFESIONALES')),
+    SalarioBase DECIMAL(10, 2) NOT NULL,
+    NumeroINSS VARCHAR(20),
+    FechaIngreso DATE NOT NULL,
+    FechaSalida DATE,
+    Banco VARCHAR(100),
+    CuentaBancaria VARCHAR(50),
+    Estado BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT chk_inss_planilla CHECK (
+        TipoContrato = 'PLANILLA' OR (TipoContrato = 'SERVICIOS_PROFESIONALES' AND NumeroINSS IS NULL)
+    )
+);
+
+CREATE TABLE PeriodosPlanilla (
+    PeriodoID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    FechaInicio DATE NOT NULL,
+    FechaFin DATE NOT NULL,
+    FechaPago DATE,
+    Estado VARCHAR(30) NOT NULL DEFAULT 'ABIERTO' CHECK (Estado IN ('ABIERTO','PAGADO','CERRADO'))
+);
+
+CREATE TABLE PlanillaDetalle (
+    DetalleID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    PeriodoID INT NOT NULL,
+    EmpleadoID INT NOT NULL,
+    SalarioBruto DECIMAL(10, 2) NOT NULL,
+    HorasExtra DECIMAL(10, 2) DEFAULT 0,
+    Comisiones DECIMAL(10, 2) DEFAULT 0,
+    OtrosIngresos DECIMAL(10, 2) DEFAULT 0,
+    INSSLaboral DECIMAL(10, 2) DEFAULT 0,
+    IR DECIMAL(10, 2) DEFAULT 0,
+    OtrasDeducciones DECIMAL(10, 2) DEFAULT 0,
+    SalarioNeto DECIMAL(10, 2) GENERATED ALWAYS AS (
+        (SalarioBruto + HorasExtra + Comisiones + OtrosIngresos) - (INSSLaboral + IR + OtrasDeducciones)
+    ) STORED,
+    FOREIGN KEY (PeriodoID) REFERENCES PeriodosPlanilla(PeriodoID),
+    FOREIGN KEY (EmpleadoID) REFERENCES Empleados(EmpleadoID)
+);
+
+
+-- =====================================================================
+-- REQUISITO 5: auditoría (qué usuario hizo qué)
+-- =====================================================================
+-- fn_auditoria() es genérica: se puede "enganchar" a cualquier tabla.
+-- Guarda el estado anterior y nuevo de la fila en JSONB.
+-- IMPORTANTE: para que UsuarioID se llene, tu aplicación debe fijar,
+-- al iniciar la sesión de BD, quién es el usuario logueado, por
+-- ejemplo:  SET app.usuario_id = '3';
+-- Si nunca se fija, el trigger simplemente deja UsuarioID en NULL
+-- (no falla).
+CREATE TABLE Auditoria (
+    AuditoriaID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    UsuarioID INT,
+    Tabla VARCHAR(100) NOT NULL,
+    Operacion VARCHAR(10) NOT NULL CHECK (Operacion IN ('INSERT','UPDATE','DELETE')),
+    DatosAnteriores JSONB,
+    DatosNuevos JSONB,
+    Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+);
+
+CREATE OR REPLACE FUNCTION fn_auditoria()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_usuario_id INT;
+BEGIN
+    BEGIN
+        v_usuario_id := current_setting('app.usuario_id', true)::INT;
+    EXCEPTION WHEN OTHERS THEN
+        v_usuario_id := NULL;
+    END;
+
+    IF TG_OP = 'DELETE' THEN
+        INSERT INTO Auditoria(UsuarioID, Tabla, Operacion, DatosAnteriores)
+        VALUES (v_usuario_id, TG_TABLE_NAME, TG_OP, to_jsonb(OLD));
+        RETURN OLD;
+    ELSIF TG_OP = 'UPDATE' THEN
+        INSERT INTO Auditoria(UsuarioID, Tabla, Operacion, DatosAnteriores, DatosNuevos)
+        VALUES (v_usuario_id, TG_TABLE_NAME, TG_OP, to_jsonb(OLD), to_jsonb(NEW));
+        RETURN NEW;
+    ELSIF TG_OP = 'INSERT' THEN
+        INSERT INTO Auditoria(UsuarioID, Tabla, Operacion, DatosNuevos)
+        VALUES (v_usuario_id, TG_TABLE_NAME, TG_OP, to_jsonb(NEW));
+        RETURN NEW;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Ejemplo de "enganche" en las tablas más sensibles. Agrega más
+-- líneas como estas por cada tabla que quieras auditar:
+CREATE TRIGGER trg_auditoria_ventas
+AFTER INSERT OR UPDATE OR DELETE ON Ventas
+FOR EACH ROW EXECUTE FUNCTION fn_auditoria();
+
+CREATE TRIGGER trg_auditoria_productos
+AFTER INSERT OR UPDATE OR DELETE ON Productos
+FOR EACH ROW EXECUTE FUNCTION fn_auditoria();
+
+CREATE TRIGGER trg_auditoria_compras
+AFTER INSERT OR UPDATE OR DELETE ON Compras
+FOR EACH ROW EXECUTE FUNCTION fn_auditoria();
+
+CREATE TRIGGER trg_auditoria_devoluciones
+AFTER INSERT OR UPDATE OR DELETE ON Devoluciones
+FOR EACH ROW EXECUTE FUNCTION fn_auditoria();
+
+
+-- =====================================================================
+-- Índices recomendados (opcional, no obligatorio para que corra)
+-- =====================================================================
+CREATE INDEX idx_ventas_fecha ON Ventas(Fecha);
+CREATE INDEX idx_compras_fecha ON Compras(Fecha);
+CREATE INDEX idx_auditoria_tabla_fecha ON Auditoria(Tabla, Fecha);
+CREATE INDEX idx_movinventario_producto ON MovimientosInventario(ProductoID);
+CREATE INDEX idx_productos_catalogo ON Productos(PublicadoEnCatalogo) WHERE PublicadoEnCatalogo = TRUE;

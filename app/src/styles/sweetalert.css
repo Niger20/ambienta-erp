@@ -1,0 +1,153 @@
+/* =========================================
+   SweetAlert2 Premium Custom Theme Overrides
+   ========================================= */
+.swal2-backdrop-show {
+  background: rgba(15, 23, 42, 0.75) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
+.swal2-popup {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-xl) !important;
+  font-family: var(--font-sans) !important;
+  box-shadow: var(--shadow-elevated) !important;
+  padding: 2rem !important;
+}
+
+/* Aplicar la animación premium solo al mostrar el popup para no interferir con el cierre de SweetAlert2 */
+.swal2-popup.swal2-show {
+  animation: modalScaleUp 200ms var(--ease-out) !important;
+}
+
+.swal2-title {
+  color: var(--text-primary) !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.swal2-html-container {
+  color: var(--text-secondary) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.swal2-actions {
+  gap: 0.75rem !important;
+  margin-top: 1.5rem !important;
+}
+
+.swal2-styled {
+  margin: 0 !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  padding: 0.625rem 1.25rem !important;
+  border-radius: var(--radius-md) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: transform var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast) !important;
+}
+
+.swal2-styled:active {
+  transform: scale(0.96) !important;
+}
+
+/* Confirm Button */
+.swal2-styled.swal2-confirm {
+  background-color: var(--accent-primary) !important;
+  color: var(--accent-contrast) !important;
+  border: 1px solid var(--accent-primary) !important;
+}
+
+.swal2-styled.swal2-confirm:hover {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)) !important;
+}
+
+/* Cancel Button */
+.swal2-styled.swal2-cancel {
+  background-color: transparent !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.swal2-styled.swal2-cancel:hover {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Toast Overrides */
+.swal2-toast {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.swal2-toast .swal2-title {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+/* Custom Proposal Card styles */
+.proposal-card {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  background-color: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Add a subtle top lighting glow on hover */
+.proposal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.proposal-card:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+}
+
+.proposal-card:hover::before {
+  opacity: 1;
+}
+
+.proposal-card:active {
+  transform: translateY(-1px) scale(0.985);
+}
+
+.proposal-card-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.proposal-card-info-item svg {
+  color: var(--accent-primary);
+  opacity: 0.8;
+}

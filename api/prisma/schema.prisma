@@ -1,0 +1,818 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model abonos {
+  abonoid          Int              @id @default(autoincrement())
+  cuentaid         Int
+  fecha            DateTime?        @default(now()) @db.Timestamp(6)
+  monto            Decimal          @db.Decimal(10, 2)
+  metodopago       String           @db.VarChar(50)
+  cuentasporcobrar cuentasporcobrar @relation(fields: [cuentaid], references: [cuentaid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model categoriasproductos {
+  categoriaid Int         @id @default(autoincrement())
+  nombre      String      @db.VarChar(100)
+  descripcion String?
+  productos   productos[]
+}
+
+model clientes {
+  clienteid           Int                 @id @default(autoincrement())
+  categoriaclienteid  Int?
+  nombre              String              @db.VarChar(100)
+  tipocliente         String              @default("NATURAL") @db.VarChar(20)
+  cedula              String?             @unique @db.VarChar(20)
+  ruc                 String?             @unique @db.VarChar(20)
+  telefono            String?             @db.VarChar(15)
+  direccion           String?
+  ubicaciongeografica String?             @db.VarChar(255)
+  limitecredito       Decimal?            @db.Decimal(10, 2)
+  categoriasclientes  categoriasclientes? @relation(fields: [categoriaclienteid], references: [categoriaclienteid], onDelete: NoAction, onUpdate: NoAction)
+  cuentasporcobrar    cuentasporcobrar[]
+  ventas              ventas[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model compras {
+  compraid                 Int                        @id @default(autoincrement())
+  proveedorid              Int
+  ordencompraid            Int?
+  fecha                    DateTime?                  @default(now()) @db.Timestamp(6)
+  total                    Decimal                    @db.Decimal(10, 2)
+  metodopago               String                     @db.VarChar(50)
+  tipocompra               String                     @db.VarChar(50)
+  estado                   Boolean                    @default(true)
+  facturaproveedor         String?                    @db.VarChar(100)
+  ordenescompra            ordenescompra?             @relation(fields: [ordencompraid], references: [ordencompraid], onDelete: NoAction, onUpdate: NoAction)
+  proveedores              proveedores                @relation(fields: [proveedorid], references: [proveedorid], onDelete: NoAction, onUpdate: NoAction)
+  comprasproductos         comprasproductos[]
+  costosadicionalescompras costosadicionalescompras[]
+  cuentasporpagar          cuentasporpagar[]
+  movimientoscompras       movimientoscompras[]
+
+  @@index([fecha], map: "idx_compras_fecha")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model comprasproductos {
+  compraid       Int
+  productoid     Int
+  cantidad       Decimal   @db.Decimal(10, 2)
+  preciounitario Decimal   @db.Decimal(10, 2)
+  descuento      Decimal?  @default(0) @db.Decimal(10, 2)
+  totalproducto  Decimal?  @default(dbgenerated("((preciounitario * cantidad) - descuento)")) @db.Decimal(10, 2)
+  numerolote     String?   @db.VarChar(50)
+  compras        compras   @relation(fields: [compraid], references: [compraid], onDelete: NoAction, onUpdate: NoAction)
+  productos      productos @relation(fields: [productoid], references: [productoid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([compraid, productoid])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cuentasporcobrar {
+  cuentaid         Int      @id @default(autoincrement())
+  ventaid          Int
+  clienteid        Int
+  montototal       Decimal  @db.Decimal(10, 2)
+  montopagado      Decimal? @default(0) @db.Decimal(10, 2)
+  montorestante    Decimal? @default(dbgenerated("(montototal - montopagado)")) @db.Decimal(10, 2)
+  fechavencimiento DateTime @db.Date
+  estado           String   @db.VarChar(50)
+  abonos           abonos[]
+  clientes         clientes @relation(fields: [clienteid], references: [clienteid], onDelete: NoAction, onUpdate: NoAction)
+  ventas           ventas   @relation(fields: [ventaid], references: [ventaid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cuentasporpagar {
+  cuentapagarid       Int                   @id @default(autoincrement())
+  compraid            Int
+  montototal          Decimal               @db.Decimal(10, 2)
+  montopagado         Decimal?              @default(0) @db.Decimal(10, 2)
+  montorestante       Decimal?              @default(dbgenerated("(montototal - montopagado)")) @db.Decimal(10, 2)
+  cuotas              Int?
+  montocuota          Decimal?              @db.Decimal(10, 2)
+  fechacuota          Int?
+  fechavencimiento    DateTime              @db.Date
+  estado              String                @db.VarChar(50)
+  compras             compras               @relation(fields: [compraid], references: [compraid], onDelete: NoAction, onUpdate: NoAction)
+  pagocuentasporpagar pagocuentasporpagar[]
+}
+
+model deliveries {
+  deliveryid       Int             @id @default(autoincrement())
+  repartidorid     Int
+  fecha            DateTime?       @default(now()) @db.Timestamp(6)
+  direccionentrega String
+  costo            Decimal         @db.Decimal(10, 2)
+  estado           Boolean?
+  repartidores     repartidores    @relation(fields: [repartidorid], references: [repartidorid], onDelete: NoAction, onUpdate: NoAction)
+  ventadelivery    ventadelivery[]
+}
+
+model empresa {
+  empresaid     Int      @id @default(autoincrement())
+  nombreempresa String?  @db.VarChar(100)
+  direccion     String?
+  telefono      String?  @db.VarChar(15)
+  ruc           String?  @db.VarChar(50)
+  logourl       String?  @db.VarChar(255)
+  tasacambio    Decimal? @db.Decimal(10, 2)
+}
+
+model gastos {
+  gastoid     Int          @id @default(autoincrement())
+  usuarioid   Int
+  nombre      String       @db.VarChar(100)
+  descripcion String?
+  usuarios    usuarios     @relation(fields: [usuarioid], references: [usuarioid], onDelete: NoAction, onUpdate: NoAction)
+  pagogastos  pagogastos[]
+}
+
+model movimientoscompras {
+  movimientocompraid    Int
+  compraid              Int
+  compras               compras               @relation(fields: [compraid], references: [compraid], onDelete: NoAction, onUpdate: NoAction)
+  movimientosinventario movimientosinventario @relation(fields: [movimientocompraid], references: [movimientoid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([movimientocompraid, compraid])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model movimientosinventario {
+  movimientoid       Int                  @id @default(autoincrement())
+  productoid         Int
+  tipomovimiento     String               @db.VarChar(50)
+  cantidad           Decimal              @db.Decimal(10, 2)
+  numerolote         String?              @db.VarChar(50)
+  stockanterior      Decimal              @db.Decimal(10, 2)
+  stockresultante    Decimal?             @default(dbgenerated("(stockanterior + cantidad)")) @db.Decimal(10, 2)
+  fecha              DateTime?            @default(now()) @db.Timestamp(6)
+  motivo             String?
+  mermasEgreso       mermas[]             @relation("MermaMovimientoEgreso")
+  mermasIngreso      mermas[]             @relation("MermaMovimientoIngreso")
+  movimientoscompras movimientoscompras[]
+  productos          productos            @relation(fields: [productoid], references: [productoid], onDelete: NoAction, onUpdate: NoAction)
+  movimientoventas   movimientoventas[]
+
+  @@index([productoid], map: "idx_movinventario_producto")
+}
+
+model movimientoventas {
+  movimeintoventaid     Int
+  ventaid               Int
+  movimientosinventario movimientosinventario @relation(fields: [movimeintoventaid], references: [movimientoid], onDelete: NoAction, onUpdate: NoAction)
+  ventas                ventas                @relation(fields: [ventaid], references: [ventaid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([movimeintoventaid, ventaid])
+}
+
+model pagocuentasporpagar {
+  pagoid          Int
+  cuentapagarid   Int
+  cuentasporpagar cuentasporpagar @relation(fields: [cuentapagarid], references: [cuentapagarid], onDelete: NoAction, onUpdate: NoAction)
+  pagos           pagos           @relation(fields: [pagoid], references: [pagoid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([pagoid, cuentapagarid])
+}
+
+model pagogastos {
+  pagoid  Int
+  gastoid Int
+  gastos  gastos @relation(fields: [gastoid], references: [gastoid], onDelete: NoAction, onUpdate: NoAction)
+  pagos   pagos  @relation(fields: [pagoid], references: [pagoid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([pagoid, gastoid])
+}
+
+model pagos {
+  pagoid              Int                   @id @default(autoincrement())
+  fecha               DateTime?             @default(now()) @db.Timestamp(6)
+  monto               Decimal               @db.Decimal(10, 2)
+  metodopago          String                @default("Efectivo") @db.VarChar(50)
+  estado              Boolean?              @default(false)
+  pagocuentasporpagar pagocuentasporpagar[]
+  pagogastos          pagogastos[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model productos {
+  productoid               Int                      @id @default(autoincrement())
+  codigobarra              String?                  @unique @db.VarChar(50)
+  categoriaid              Int?
+  unidadmedidaid           Int
+  nombre                   String                   @db.VarChar(100)
+  descripcion              String?
+  preciocompra             Decimal                  @db.Decimal(10, 2)
+  precioventa              Decimal                  @db.Decimal(10, 2)
+  utilidad                 Decimal?                 @default(dbgenerated("(precioventa - preciocompra)")) @db.Decimal(10, 2)
+  preciomayoreo            Decimal?                 @db.Decimal(10, 2)
+  cantidadminimamayoreo    Decimal?                 @db.Decimal(10, 2)
+  stockminimo              Decimal?                 @default(0) @db.Decimal(10, 2)
+  stockactual              Decimal?                 @default(0) @db.Decimal(10, 2)
+  requierefechavencimiento Boolean                  @default(false)
+  fechavencimiento         DateTime?                @db.Date
+  publicadoencatalogo      Boolean                  @default(false)
+  comprasproductos         comprasproductos[]
+  imagenesproductos        imagenesproductos[]
+  mermasOrigen             mermas[]                 @relation("MermaProductoOrigen")
+  mermasDestino            mermas[]                 @relation("MermaProductoDestino")
+  movimientosinventario    movimientosinventario[]
+  ordenescompraproductos   ordenescompraproductos[]
+  categoriasproductos      categoriasproductos?     @relation(fields: [categoriaid], references: [categoriaid], onDelete: NoAction, onUpdate: NoAction)
+  unidadesmedida           unidadesmedida           @relation(fields: [unidadmedidaid], references: [unidadmedidaid], onDelete: NoAction, onUpdate: NoAction)
+  ventaproductos           ventaproductos[]
+}
+
+model proveedores {
+  proveedorid         Int             @id @default(autoincrement())
+  nombreempresa       String          @db.VarChar(100)
+  asesorventas        String          @db.VarChar(100)
+  telefono            String?         @db.VarChar(15)
+  direccion           String?
+  ubicaciongeografica String?         @db.VarChar(255)
+  clasificacion       String?         @db.VarChar(50)
+  compras             compras[]
+  ordenescompra       ordenescompra[]
+}
+
+model repartidores {
+  repartidorid Int          @id @default(autoincrement())
+  nombre       String       @db.VarChar(100)
+  telefono     String?      @db.VarChar(15)
+  deliveries   deliveries[]
+}
+
+model sesiones {
+  sesionid          Int       @id @default(autoincrement())
+  usuarioid         Int
+  fechainicio       DateTime? @default(now()) @db.Timestamp(6)
+  fechafin          DateTime? @db.Timestamp(6)
+  montoinicial      Decimal   @db.Decimal(10, 2)
+  montofinalsistema Decimal?  @db.Decimal(10, 2)
+  montofinalfisico  Decimal?  @db.Decimal(10, 2)
+  usuarios          usuarios  @relation(fields: [usuarioid], references: [usuarioid], onDelete: NoAction, onUpdate: NoAction)
+  ventas            ventas[]
+}
+
+model usuarios {
+  usuarioid              Int                      @id @default(autoincrement())
+  nombreusuario          String                   @unique @db.VarChar(50)
+  contrasenahash         String                   @db.VarChar(255)
+  fecharegistro          DateTime?                @default(now()) @db.Timestamp(6)
+  rol                    String?                  @db.VarChar(50)
+  anticipossalario       anticipossalario[]
+  auditoria              auditoria[]
+  devoluciones           devoluciones[]
+  gastos                 gastos[]
+  historialsalarios      historialsalarios[]
+  liquidacionesempleados liquidacionesempleados[]
+  mermas                 mermas[]
+  pagosbeneficios        pagosbeneficios[]
+  periodosplanilla       periodosplanilla[]
+  prestamosempleados     prestamosempleados[]
+  sesiones               sesiones[]
+  solicitudesvacaciones  solicitudesvacaciones[]
+}
+
+model ventadelivery {
+  ventaid    Int
+  deliveryid Int
+  deliveries deliveries @relation(fields: [deliveryid], references: [deliveryid], onDelete: NoAction, onUpdate: NoAction)
+  ventas     ventas     @relation(fields: [ventaid], references: [ventaid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([ventaid, deliveryid])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ventaproductos {
+  ventaid        Int
+  productoid     Int
+  cantidad       Decimal        @db.Decimal(10, 2)
+  preciounitario Decimal        @db.Decimal(10, 2)
+  descuento      Decimal?       @default(0) @db.Decimal(10, 2)
+  totalproducto  Decimal?       @default(dbgenerated("((preciounitario * cantidad) - descuento)")) @db.Decimal(10, 2)
+  devoluciones   devoluciones[]
+  productos      productos      @relation(fields: [productoid], references: [productoid], onDelete: NoAction, onUpdate: NoAction)
+  ventas         ventas         @relation(fields: [ventaid], references: [ventaid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([ventaid, productoid])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ventas {
+  ventaid             Int                @id @default(autoincrement())
+  clienteid           Int?
+  sesionid            Int
+  fecha               DateTime?          @default(now()) @db.Timestamp(6)
+  total               Decimal            @db.Decimal(10, 2)
+  descuentofactura    Decimal            @default(0) @db.Decimal(10, 2)
+  tipoventa           String             @db.VarChar(50)
+  lugarventa          String             @db.VarChar(50)
+  tipofactura         String?            @db.VarChar(20)
+  consecutivofiscal   String?            @unique @db.VarChar(20)
+  consecutivonofiscal String?            @unique @db.VarChar(20)
+  estado              Boolean            @default(true)
+  cuentasporcobrar    cuentasporcobrar[]
+  movimientoventas    movimientoventas[]
+  ventadelivery       ventadelivery[]
+  ventapagos          ventapagos[]
+  ventaproductos      ventaproductos[]
+  clientes            clientes?          @relation(fields: [clienteid], references: [clienteid], onDelete: NoAction, onUpdate: NoAction)
+  sesiones            sesiones           @relation(fields: [sesionid], references: [sesionid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([fecha], map: "idx_ventas_fecha")
+}
+
+model acumuladodecimoprimermes {
+  acumuladodecimoid Int              @id @default(autoincrement())
+  empleadoid        Int
+  periodoid         Int
+  salariobruto      Decimal          @db.Decimal(10, 2)
+  montoacumulado    Decimal          @db.Decimal(10, 2)
+  montopagado       Decimal          @default(0) @db.Decimal(10, 2)
+  fechageneracion   DateTime         @db.Date
+  empleados         empleados        @relation(fields: [empleadoid], references: [empleadoid], onDelete: NoAction, onUpdate: NoAction)
+  periodosplanilla  periodosplanilla @relation(fields: [periodoid], references: [periodoid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([empleadoid, periodoid])
+  @@index([empleadoid], map: "idx_acum_decimo_empleado")
+}
+
+model acumuladoindemnizacion {
+  acumuladoindemnid Int              @id @default(autoincrement())
+  empleadoid        Int
+  periodoid         Int
+  salariobruto      Decimal          @db.Decimal(10, 2)
+  montoacumulado    Decimal          @db.Decimal(10, 2)
+  fechageneracion   DateTime         @db.Date
+  empleados         empleados        @relation(fields: [empleadoid], references: [empleadoid], onDelete: NoAction, onUpdate: NoAction)
+  periodosplanilla  periodosplanilla @relation(fields: [periodoid], references: [periodoid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([empleadoid, periodoid])
+  @@index([empleadoid], map: "idx_acum_indemn_empleado")
+}
+
+model acumuladovacaciones {
+  acumuladovacid   Int              @id @default(autoincrement())
+  empleadoid       Int
+  periodoid        Int
+  diasganados      Decimal          @default(2.50) @db.Decimal(6, 2)
+  valordiasalario  Decimal          @db.Decimal(10, 2)
+  montoganado      Decimal?         @default(dbgenerated("(diasganados * valordiasalario)")) @db.Decimal(10, 2)
+  diasdisfrutados  Decimal          @default(0) @db.Decimal(6, 2)
+  montopagado      Decimal          @default(0) @db.Decimal(10, 2)
+  fechageneracion  DateTime         @db.Date
+  empleados        empleados        @relation(fields: [empleadoid], references: [empleadoid], onDelete: NoAction, onUpdate: NoAction)
+  periodosplanilla periodosplanilla @relation(fields: [periodoid], references: [periodoid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([empleadoid, periodoid])
+  @@index([empleadoid], map: "idx_acum_vacaciones_empleado")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model anticipossalario {
+  anticipoid            Int               @id @default(autoincrement())
+  empleadoid            Int
+  monto                 Decimal           @db.Decimal(10, 2)
+  fechaanticipoid       DateTime          @db.Date
+  descontadoenperiodoid Int?
+  estado                String            @default("PENDIENTE") @db.VarChar(20)
+  usuarioid             Int?
+  periodosplanilla      periodosplanilla? @relation(fields: [descontadoenperiodoid], references: [periodoid], onDelete: NoAction, onUpdate: NoAction)
+  empleados             empleados         @relation(fields: [empleadoid], references: [empleadoid], onDelete: NoAction, onUpdate: NoAction)
+  usuarios              usuarios?         @relation(fields: [usuarioid], references: [usuarioid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([empleadoid, estado], map: "idx_anticipos_empleado_estado")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model auditoria {
+  auditoriaid     Int       @id @default(autoincrement())
+  usuarioid       Int?
+  tabla           String    @db.VarChar(100)
+  operacion       String    @db.VarChar(10)
+  datosanteriores Json?
+  datosnuevos     Json?
+  fecha           DateTime? @default(now()) @db.Timestamp(6)
+  usuarios        usuarios? @relation(fields: [usuarioid], references: [usuarioid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([tabla, fecha], map: "idx_auditoria_tabla_fecha")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cargosempleados {
+  cargoid                  Int                     @id @default(autoincrement())
+  departamentoid           Int?
+  nombre                   String                  @db.VarChar(100)
+  descripcion              String?
+  salariominimoreferencial Decimal?                @db.Decimal(10, 2)
+  salariomaximoreferencial Decimal?                @db.Decimal(10, 2)
+  estado                   Boolean                 @default(true)
+  departamentosempleados   departamentosempleados? @relation(fields: [departamentoid], references: [departamentoid], onDelete: NoAction, onUpdate: NoAction)
+  empleados                empleados[]
+}
+
+model categoriasclientes {
+  categoriaclienteid  Int        @id @default(autoincrement())
+  nombre              String     @unique @db.VarChar(50)
+  descripcion         String?
+  porcentajedescuento Decimal?   @default(0) @db.Decimal(5, 2)
+  clientes            clientes[]
+}
+
+model configuracioninss {
+  configinssid     Int       @id @default(autoincrement())
+  tasalaboral      Decimal   @db.Decimal(5, 4)
+  tasapatronal     Decimal   @db.Decimal(5, 4)
+  fechavigencia    DateTime  @db.Date
+  fechafinvigencia DateTime? @db.Date
+  activo           Boolean   @default(true)
+  observaciones    String?
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model costosadicionalescompras {
+  costoadicionalid Int     @id @default(autoincrement())
+  compraid         Int
+  concepto         String  @db.VarChar(100)
+  monto            Decimal @db.Decimal(10, 2)
+  compras          compras @relation(fields: [compraid], references: [compraid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cuotasprestamos {
+  cuotaid            Int                @id @default(autoincrement())
+  prestamoid         Int
+  numerocuota        Int
+  montocuota         Decimal            @db.Decimal(10, 2)
+  fechavencimiento   DateTime           @db.Date
+  fechapago          DateTime?          @db.Date
+  estado             String             @default("PENDIENTE") @db.VarChar(20)
+  detalleid          Int?
+  planilladetalle    planilladetalle?   @relation(fields: [detalleid], references: [detalleid], onDelete: NoAction, onUpdate: NoAction)
+  prestamosempleados prestamosempleados @relation(fields: [prestamoid], references: [prestamoid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([prestamoid, numerocuota])
+  @@index([prestamoid, estado], map: "idx_cuotas_prestamo_estado")
+}
+
+model departamentosempleados {
+  departamentoid                                             Int               @id @default(autoincrement())
+  nombre                                                     String            @unique @db.VarChar(100)
+  descripcion                                                String?
+  jefeempleadoid                                             Int?
+  estado                                                     Boolean           @default(true)
+  cargosempleados                                            cargosempleados[]
+  empleados_departamentosempleados_jefeempleadoidToempleados empleados?        @relation("departamentosempleados_jefeempleadoidToempleados", fields: [jefeempleadoid], references: [empleadoid], onDelete: NoAction, onUpdate: NoAction, map: "fk_jefe_empleado")
+  empleados_empleados_departamentoidTodepartamentosempleados empleados[]       @relation("empleados_departamentoidTodepartamentosempleados")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model devoluciones {
+  devolucionid   Int            @id @default(autoincrement())
+  ventaid        Int
+  productoid     Int
+  cantidad       Decimal        @db.Decimal(10, 2)
+  motivo         String
+  montodevuelto  Decimal        @db.Decimal(10, 2)
+  fecha          DateTime?      @default(now()) @db.Timestamp(6)
+  usuarioid      Int
+  usuarios       usuarios       @relation(fields: [usuarioid], references: [usuarioid], onDelete: NoAction, onUpdate: NoAction)
+  ventaproductos ventaproductos @relation(fields: [ventaid, productoid], references: [ventaid, productoid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model empleados {
+  empleadoid                                                              Int                        @id @default(autoincrement())
+  nombre                                                                  String                     @db.VarChar(100)
+  apellidos                                                               String                     @db.VarChar(100)
+  cedula                                                                  String                     @unique @db.VarChar(20)
+  fechanacimiento                                                         DateTime?                  @db.Date
+  sexo                                                                    String?                    @db.Char(1)
+  telefono                                                                String?                    @db.VarChar(20)
+  email                                                                   String?                    @db.VarChar(100)
+  direcciondomicilio                                                      String?
+  departamentoid                                                          Int?
+  cargoid                                                                 Int?
+  cargo                                                                   String                     @db.VarChar(100)
+  tipocontrato                                                            String                     @db.VarChar(30)
+  tipojornada                                                             String                     @default("DIURNA") @db.VarChar(10)
+  horasdiariasjornada                                                     Decimal                    @default(8.00) @db.Decimal(4, 2)
+  salariobase                                                             Decimal                    @db.Decimal(10, 2)
+  tipopago                                                                String                     @default("MENSUAL") @db.VarChar(20)
+  numeroinss                                                              String?                    @db.VarChar(20)
+  banco                                                                   String?                    @db.VarChar(100)
+  cuentabancaria                                                          String?                    @db.VarChar(50)
+  tipocuenta                                                              String?                    @db.VarChar(20)
+  fechaingreso                                                            DateTime                   @db.Date
+  fechasalida                                                             DateTime?                  @db.Date
+  motivosalida                                                            String?                    @db.VarChar(100)
+  estado                                                                  Boolean                    @default(true)
+  acumuladodecimoprimermes                                                acumuladodecimoprimermes[]
+  acumuladoindemnizacion                                                  acumuladoindemnizacion[]
+  acumuladovacaciones                                                     acumuladovacaciones[]
+  anticipossalario                                                        anticipossalario[]
+  departamentosempleados_departamentosempleados_jefeempleadoidToempleados departamentosempleados[]   @relation("departamentosempleados_jefeempleadoidToempleados")
+  cargosempleados                                                         cargosempleados?           @relation(fields: [cargoid], references: [cargoid], onDelete: NoAction, onUpdate: NoAction)
+  departamentosempleados_empleados_departamentoidTodepartamentosempleados departamentosempleados?    @relation("empleados_departamentoidTodepartamentosempleados", fields: [departamentoid], references: [departamentoid], onDelete: NoAction, onUpdate: NoAction)
+  historialsalarios                                                       historialsalarios[]
+  liquidacionesempleados                                                  liquidacionesempleados?
+  pagosbeneficios                                                         pagosbeneficios[]
+  planilladetalle                                                         planilladetalle[]
+  prestamosempleados                                                      prestamosempleados[]
+  registroasistencia                                                      registroasistencia[]
+  solicitudesvacaciones                                                   solicitudesvacaciones[]
+}
+
+model feriadosnacionales {
+  feriadoid    Int      @id @default(autoincrement())
+  nombre       String   @db.VarChar(100)
+  fecha        DateTime @db.Date
+  esrecurrente Boolean  @default(true)
+  activo       Boolean  @default(true)
+}
+
+model historialsalarios {
+  historialid     Int       @id @default(autoincrement())
+  empleadoid      Int
+  salarioanterior Decimal   @db.Decimal(10, 2)
+  salarionuevo    Decimal   @db.Decimal(10, 2)
+  fechacambio     DateTime? @default(now()) @db.Timestamp(6)
+  motivo          String?
+  usuarioid       Int?
+  empleados       empleados @relation(fields: [empleadoid], references: [empleadoid], onDelete: NoAction, onUpdate: NoAction)
+  usuarios        usuarios? @relation(fields: [usuarioid], references: [usuarioid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model imagenesproductos {
+  imagenid    Int       @id @default(autoincrement())
+  productoid  Int
+  urlimagen   String    @db.VarChar(255)
+  esprincipal Boolean   @default(false)
+  productos   productos @relation(fields: [productoid], references: [productoid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model liquidacionesempleados {
+  liquidacionid        Int       @id @default(autoincrement())
+  empleadoid           Int       @unique
+  fechaliquidacion     DateTime  @db.Date
+  tiposalida           String    @db.VarChar(30)
+  salariobrutobase     Decimal   @db.Decimal(10, 2)
+  diaslaborados        Int
+  vacacionespagadas    Decimal   @default(0) @db.Decimal(10, 2)
+  decimotercerpagado   Decimal   @default(0) @db.Decimal(10, 2)
+  indemnizacionpagada  Decimal   @default(0) @db.Decimal(10, 2)
+  salariosatrasados    Decimal   @default(0) @db.Decimal(10, 2)
+  otrosbeneficios      Decimal   @default(0) @db.Decimal(10, 2)
+  prestamosdescontados Decimal   @default(0) @db.Decimal(10, 2)
+  anticiposdescontados Decimal   @default(0) @db.Decimal(10, 2)
+  otrasdeduccionesliq  Decimal   @default(0) @db.Decimal(10, 2)
+  totalbruto           Decimal?  @default(dbgenerated("((((vacacionespagadas + decimotercerpagado) + indemnizacionpagada) + salariosatrasados) + otrosbeneficios)")) @db.Decimal(10, 2)
+  totaldescuentos      Decimal?  @default(dbgenerated("((prestamosdescontados + anticiposdescontados) + otrasdeduccionesliq)")) @db.Decimal(10, 2)
+  montoneto            Decimal?  @default(dbgenerated("(((((vacacionespagadas + decimotercerpagado) + indemnizacionpagada) + salariosatrasados) + otrosbeneficios) - ((prestamosdescontados + anticiposdescontados) + otrasdeduccionesliq))")) @db.Decimal(10, 2)
+  estado               String    @default("BORRADOR") @db.VarChar(20)
+  usuarioid            Int?
+  observaciones        String?
+  empleados            empleados @relation(fields: [empleadoid], references: [empleadoid], onDelete: NoAction, onUpdate: NoAction)
+  usuarios             usuarios? @relation(fields: [usuarioid], references: [usuarioid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model mermas {
+  mermaid               Int                    @id @default(autoincrement())
+  productoid            Int
+  cantidad              Decimal                @db.Decimal(10, 2)
+  costounitario         Decimal                @db.Decimal(10, 2)
+  costoperdida          Decimal?               @default(dbgenerated("(cantidad * costounitario)")) @db.Decimal(10, 2)
+  motivo                String
+  fecha                 DateTime?              @default(now()) @db.Timestamp(6)
+  usuarioid             Int
+  movimientoid          Int?
+  // Conversión de merma: si el producto A dado de baja se convierte en otro
+  // producto B (ej. cerámica entera rota -> cerámica rota para reventa),
+  // estos campos registran el destino para poder reportar la conversión.
+  productodestinoid     Int?
+  cantidaddestino       Decimal?               @db.Decimal(10, 2)
+  movimientoingresoid   Int?                   @unique
+  movimientosinventario movimientosinventario? @relation("MermaMovimientoEgreso", fields: [movimientoid], references: [movimientoid], onDelete: NoAction, onUpdate: NoAction)
+  movimientoingreso     movimientosinventario? @relation("MermaMovimientoIngreso", fields: [movimientoingresoid], references: [movimientoid], onDelete: NoAction, onUpdate: NoAction)
+  productos             productos              @relation("MermaProductoOrigen", fields: [productoid], references: [productoid], onDelete: NoAction, onUpdate: NoAction)
+  productodestino       productos?             @relation("MermaProductoDestino", fields: [productodestinoid], references: [productoid], onDelete: NoAction, onUpdate: NoAction)
+  usuarios              usuarios               @relation(fields: [usuarioid], references: [usuarioid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ordenescompra {
+  ordencompraid          Int                      @id @default(autoincrement())
+  proveedorid            Int
+  fechaorden             DateTime?                @default(now()) @db.Timestamp(6)
+  fechaesperada          DateTime?                @db.Date
+  estado                 String                   @default("PENDIENTE") @db.VarChar(50)
+  compras                compras[]
+  proveedores            proveedores              @relation(fields: [proveedorid], references: [proveedorid], onDelete: NoAction, onUpdate: NoAction)
+  ordenescompraproductos ordenescompraproductos[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ordenescompraproductos {
+  ordencompraid    Int
+  productoid       Int
+  cantidadordenada Decimal       @db.Decimal(10, 2)
+  preciounitario   Decimal       @db.Decimal(10, 2)
+  ordenescompra    ordenescompra @relation(fields: [ordencompraid], references: [ordencompraid], onDelete: NoAction, onUpdate: NoAction)
+  productos        productos     @relation(fields: [productoid], references: [productoid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([ordencompraid, productoid])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model pagosbeneficios {
+  pagobeneficioid  Int               @id @default(autoincrement())
+  empleadoid       Int
+  tipobeneficio    String            @db.VarChar(30)
+  montopagado      Decimal           @db.Decimal(10, 2)
+  fechapago        DateTime          @db.Date
+  periodoid        Int?
+  observaciones    String?
+  usuarioid        Int?
+  empleados        empleados         @relation(fields: [empleadoid], references: [empleadoid], onDelete: NoAction, onUpdate: NoAction)
+  periodosplanilla periodosplanilla? @relation(fields: [periodoid], references: [periodoid], onDelete: NoAction, onUpdate: NoAction)
+  usuarios         usuarios?         @relation(fields: [usuarioid], references: [usuarioid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model periodosplanilla {
+  periodoid                Int                        @id @default(autoincrement())
+  tipoperiodo              String                     @default("MENSUAL") @db.VarChar(20)
+  fechainicio              DateTime                   @db.Date
+  fechafin                 DateTime                   @db.Date
+  fechapago                DateTime?                  @db.Date
+  estado                   String                     @default("ABIERTO") @db.VarChar(20)
+  observaciones            String?
+  usuarioaprobacionid      Int?
+  fechaaprobacion          DateTime?                  @db.Timestamp(6)
+  acumuladodecimoprimermes acumuladodecimoprimermes[]
+  acumuladoindemnizacion   acumuladoindemnizacion[]
+  acumuladovacaciones      acumuladovacaciones[]
+  anticipossalario         anticipossalario[]
+  pagosbeneficios          pagosbeneficios[]
+  usuarios                 usuarios?                  @relation(fields: [usuarioaprobacionid], references: [usuarioid], onDelete: NoAction, onUpdate: NoAction)
+  planilladetalle          planilladetalle[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model planilladeducciones {
+  deduccionplanillaid Int             @id @default(autoincrement())
+  detalleid           Int
+  concepto            String          @db.VarChar(100)
+  monto               Decimal         @db.Decimal(10, 2)
+  planilladetalle     planilladetalle @relation(fields: [detalleid], references: [detalleid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model planilladetalle {
+  detalleid           Int                   @id @default(autoincrement())
+  periodoid           Int
+  empleadoid          Int
+  salariobruto        Decimal               @db.Decimal(10, 2)
+  montohorasextra     Decimal               @default(0) @db.Decimal(10, 2)
+  comisiones          Decimal               @default(0) @db.Decimal(10, 2)
+  pagoferiados        Decimal               @default(0) @db.Decimal(10, 2)
+  otrosingresos       Decimal               @default(0) @db.Decimal(10, 2)
+  totalingresos       Decimal?              @default(dbgenerated("((((salariobruto + montohorasextra) + comisiones) + pagoferiados) + otrosingresos)")) @db.Decimal(10, 2)
+  insslaboral         Decimal               @default(0) @db.Decimal(10, 2)
+  ir                  Decimal               @default(0) @db.Decimal(10, 2)
+  otrasdeducciones    Decimal               @default(0) @db.Decimal(10, 2)
+  cuotasprestamos     Decimal               @default(0) @db.Decimal(10, 2)
+  anticipos           Decimal               @default(0) @db.Decimal(10, 2)
+  totaldeducciones    Decimal?              @default(dbgenerated("((((insslaboral + ir) + otrasdeducciones) + cuotasprestamos) + anticipos)")) @db.Decimal(10, 2)
+  salarioneto         Decimal?              @default(dbgenerated("(((((salariobruto + montohorasextra) + comisiones) + pagoferiados) + otrosingresos) - ((((insslaboral + ir) + otrasdeducciones) + cuotasprestamos) + anticipos))")) @db.Decimal(10, 2)
+  insspatronal        Decimal               @default(0) @db.Decimal(10, 2)
+  estado              String                @default("BORRADOR") @db.VarChar(20)
+  observaciones       String?
+  cuotasprestamos_rel cuotasprestamos[]
+  planilladeducciones planilladeducciones[]
+  empleados           empleados             @relation(fields: [empleadoid], references: [empleadoid], onDelete: NoAction, onUpdate: NoAction)
+  periodosplanilla    periodosplanilla      @relation(fields: [periodoid], references: [periodoid], onDelete: NoAction, onUpdate: NoAction)
+  planillahorasextra  planillahorasextra[]
+
+  @@unique([periodoid, empleadoid])
+  @@index([empleadoid], map: "idx_planilla_detalle_empleado")
+  @@index([estado], map: "idx_planilla_detalle_estado")
+  @@index([periodoid], map: "idx_planilla_detalle_periodo")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model planillahorasextra {
+  horasextraid      Int             @id @default(autoincrement())
+  detalleid         Int
+  fecha             DateTime        @db.Date
+  tipohora          String          @db.VarChar(20)
+  horastrabajadas   Decimal         @db.Decimal(4, 2)
+  tarifahora        Decimal         @db.Decimal(10, 2)
+  porcentajerecargo Decimal         @db.Decimal(5, 2)
+  montohoraextra    Decimal?        @default(dbgenerated("((horastrabajadas * tarifahora) * (porcentajerecargo / 100.0))")) @db.Decimal(10, 2)
+  planilladetalle   planilladetalle @relation(fields: [detalleid], references: [detalleid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model prestamosempleados {
+  prestamoid      Int               @id @default(autoincrement())
+  empleadoid      Int
+  monto           Decimal           @db.Decimal(10, 2)
+  montopagado     Decimal           @default(0) @db.Decimal(10, 2)
+  montorestante   Decimal?          @default(dbgenerated("(monto - montopagado)")) @db.Decimal(10, 2)
+  numerocuotas    Int
+  montocuota      Decimal           @db.Decimal(10, 2)
+  fechadesembolso DateTime          @db.Date
+  motivo          String?
+  estado          String            @default("ACTIVO") @db.VarChar(20)
+  usuarioid       Int?
+  cuotasprestamos cuotasprestamos[]
+  empleados       empleados         @relation(fields: [empleadoid], references: [empleadoid], onDelete: NoAction, onUpdate: NoAction)
+  usuarios        usuarios?         @relation(fields: [usuarioid], references: [usuarioid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([empleadoid, estado], map: "idx_prestamos_empleado")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model registroasistencia {
+  asistenciaid    Int       @id @default(autoincrement())
+  empleadoid      Int
+  fecha           DateTime  @db.Date
+  horaentrada     DateTime? @db.Time(6)
+  horasalida      DateTime? @db.Time(6)
+  horastrabajadas Decimal?  @db.Decimal(5, 2)
+  horasextra      Decimal   @default(0) @db.Decimal(5, 2)
+  tipoausencia    String?   @db.VarChar(20)
+  observaciones   String?
+  empleados       empleados @relation(fields: [empleadoid], references: [empleadoid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([empleadoid, fecha])
+  @@index([empleadoid, fecha], map: "idx_asistencia_empleado_fecha")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model solicitudesvacaciones {
+  solicitudvacid      Int       @id @default(autoincrement())
+  empleadoid          Int
+  fechainicio         DateTime  @db.Date
+  fechafin            DateTime  @db.Date
+  diashabiles         Decimal   @db.Decimal(6, 2)
+  estado              String    @default("PENDIENTE") @db.VarChar(20)
+  usuarioaprobacionid Int?
+  fechaaprobacion     DateTime? @db.Timestamp(6)
+  observaciones       String?
+  empleados           empleados @relation(fields: [empleadoid], references: [empleadoid], onDelete: NoAction, onUpdate: NoAction)
+  usuarios            usuarios? @relation(fields: [usuarioaprobacionid], references: [usuarioid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model tablatramoir {
+  tramoirid     Int      @id @default(autoincrement())
+  salariodesde  Decimal  @db.Decimal(12, 2)
+  salariohasta  Decimal? @db.Decimal(12, 2)
+  cuotafija     Decimal  @default(0) @db.Decimal(12, 2)
+  tasamarginal  Decimal  @default(0) @db.Decimal(5, 4)
+  fechavigencia DateTime @db.Date
+  activo        Boolean  @default(true)
+}
+
+model unidadesmedida {
+  unidadmedidaid         Int         @id @default(autoincrement())
+  nombre                 String      @unique @db.VarChar(50)
+  abreviatura            String      @db.VarChar(10)
+  permitefraccionamiento Boolean     @default(false)
+  productos              productos[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ventapagos {
+  ventapagoid         Int     @id @default(autoincrement())
+  ventaid             Int
+  metodopago          String  @db.VarChar(20)
+  monto               Decimal @db.Decimal(10, 2)
+  banco               String? @db.VarChar(100)
+  numerotransferencia String? @db.VarChar(50)
+  ventas              ventas  @relation(fields: [ventaid], references: [ventaid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model autorizaciones {
+  autorizacionid Int       @default(autoincrement())
+  usuarioid      Int
+  accion         String    @db.VarChar(100)
+  detalle        String?   @db.VarChar(255)
+  codigo         String?   @db.VarChar(10)
+  estado         String    @default("PENDIENTE") @db.VarChar(50)
+  fecha          DateTime? @default(now()) @db.Timestamp(6)
+
+  @@id([autorizacionid, usuarioid], map: "pk_autorizaciones")
+}

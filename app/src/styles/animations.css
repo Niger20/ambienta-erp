@@ -1,0 +1,124 @@
+/* =========================================
+   UI Polish & Animations (Emil Kowalski)
+   ========================================= */
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes tabFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Modal Close Button ── */
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.modal-close-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.modal-close-btn:active {
+  transform: scale(0.92);
+}
+
+/* ── Tab Content Fade-in ── */
+.tab-content {
+  animation: tabFadeInUp 200ms var(--ease-out) both;
+}
+
+/* ── Accordion Slide Down ── */
+.accordion-content {
+  animation: slideDownFade 220ms var(--ease-out) both;
+}
+
+/* ── Custom Status Switch Toggles ── */
+.status-switch-toggle {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  width: 40px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  position: relative;
+  transition: background-color 200ms var(--ease-out);
+}
+
+.status-switch-toggle--active {
+  background-color: var(--accent-success);
+}
+
+.status-switch-toggle--inactive {
+  background-color: var(--accent-danger);
+}
+
+.status-switch-handle {
+  width: 18px;
+  height: 18px;
+  background-color: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  box-shadow: var(--shadow-sm);
+  transition: left 200ms var(--ease-out);
+}
+
+.status-switch-handle--active {
+  left: 19px;
+}
+
+.status-switch-handle--inactive {
+  left: 3px;
+}
+

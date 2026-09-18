@@ -1,0 +1,493 @@
+/* =========================================
+   POS (Punto de Venta) Module
+   ========================================= */
+
+/* Scanner input wrap */
+.pos-scanner-wrap {
+  position: relative;
+}
+
+.pos-scanner-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.25rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.pos-scanner-input {
+  padding-left: 3rem !important;
+  font-size: 1.1rem !important;
+  height: 3.25rem;
+  background: var(--bg-card) !important;
+  border: 2px solid var(--border-color) !important;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.pos-scanner-input:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+}
+
+.pos-scanner-error {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent-danger);
+  font-size: 0.85rem;
+  font-weight: 500;
+  animation: fadeIn 150ms ease-out;
+}
+
+/* Two-column layout */
+.pos-layout {
+  display: grid;
+  grid-template-columns: 1fr 370px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .pos-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pos-table-card {
+  min-height: 300px;
+}
+
+.pos-table-card:hover {
+  transform: none;
+}
+
+/* Empty state */
+.pos-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+}
+
+.pos-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Product table */
+.pos-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.pos-table thead th {
+  padding: 0.75rem 0.5rem;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.pos-table tbody td {
+  padding: 0.85rem 0.5rem;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+  vertical-align: middle;
+}
+
+.pos-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.04);
+}
+
+/* Flash animation for newly added rows */
+@keyframes posRowFlash {
+  0% {
+    background: rgba(16, 185, 129, 0.2);
+  }
+
+  100% {
+    background: transparent;
+  }
+}
+
+.pos-row-flash {
+  animation: posRowFlash 0.8s ease-out;
+}
+
+/* Barcode badge */
+.pos-barcode-badge {
+  display: inline-block;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-primary);
+  letter-spacing: 0.04em;
+}
+
+/* Quantity controls */
+.pos-qty-control {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.pos-qty-btn {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background var(--transition-fast);
+}
+
+.pos-qty-btn:hover {
+  background: var(--accent-primary);
+  color: #fff;
+}
+
+.pos-qty-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
+}
+
+.pos-qty-btn:active {
+  transform: scale(0.95);
+}
+
+.pos-qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.pos-qty-input {
+  width: 2.5rem;
+  height: 2rem;
+  text-align: center;
+  border: none;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  -moz-appearance: textfield;
+  appearance: textfield;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.pos-qty-input:focus {
+  outline: none;
+  background: var(--bg-hover);
+  box-shadow: inset 0 0 0 1px var(--accent-primary);
+}
+
+.pos-qty-input::-webkit-outer-spin-button,
+.pos-qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Remove button */
+.pos-remove-btn {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--accent-danger);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.pos-remove-btn:hover {
+  background: var(--accent-danger);
+  color: #fff;
+}
+
+.pos-remove-btn:focus-visible {
+  outline: 2px solid var(--accent-danger);
+  outline-offset: 2px;
+}
+
+.pos-remove-btn:active {
+  transform: scale(0.95);
+}
+
+/* Summary panel */
+.pos-summary {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 2rem;
+}
+
+.pos-summary-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  border-top: 2px solid var(--accent-primary);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.pos-summary-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.pos-summary-body {
+  padding: 1.5rem;
+}
+
+.pos-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.pos-summary-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 0.75rem 0;
+}
+
+.pos-summary-total {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--accent-success);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  padding: 0.85rem 0;
+  line-height: 1;
+}
+
+.pos-summary-actions {
+  padding: 0 1.5rem 1.5rem;
+}
+
+.pos-btn-charge {
+  width: 100%;
+  padding: 0.9rem 1.25rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.75rem;
+  background: var(--accent-success) !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2) !important;
+  transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.pos-btn-charge:hover {
+  background: var(--accent-success-hover) !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.15) !important;
+}
+
+.pos-btn-charge:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.pos-btn-customer {
+  background: var(--accent-primary-bg) !important;
+  color: var(--accent-primary) !important;
+  border: 1px solid var(--accent-primary-border) !important;
+  transition: background-color var(--transition-fast);
+}
+
+.pos-btn-customer:hover {
+  background: rgba(59, 130, 246, 0.25) !important;
+}
+
+.pos-btn-customer:disabled,
+.pos-btn-customer-sm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pos-btn-customer-sm {
+  width: 100%;
+  background: rgba(59, 130, 246, 0.1) !important;
+  color: var(--accent-primary) !important;
+  border: 1px solid rgba(59, 130, 246, 0.2) !important;
+  padding: 0.7rem 1rem !important;
+}
+
+.pos-btn-customer-sm:hover {
+  background: rgba(59, 130, 246, 0.2) !important;
+}
+
+/* ─── Customer-facing Invoice Popup ─── */
+.pos-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 200ms ease-out;
+}
+
+.pos-popup {
+  background: #ffffff;
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+  color: #1e293b;
+  animation: posPopupSlide 250ms var(--ease-out) both;
+}
+
+@keyframes posPopupSlide {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pos-popup-header {
+  position: relative;
+  text-align: center;
+  padding: 2rem 2rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-radius: 1rem 1rem 0 0;
+  color: #fff;
+}
+
+.pos-popup-logo {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.pos-popup-subtitle {
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.pos-popup-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 150ms ease-out;
+}
+
+.pos-popup-close:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.pos-popup-body {
+  padding: 1.5rem 2rem;
+}
+
+.pos-popup-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pos-popup-table thead th {
+  padding: 0.75rem 0.5rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  border-bottom: 2px solid #e2e8f0;
+  font-weight: 600;
+}
+
+.pos-popup-table tbody td {
+  padding: 0.85rem 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.95rem;
+}
+
+.pos-popup-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pos-popup-footer {
+  padding: 1.5rem 2rem 2rem;
+  border-top: 2px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 0 0 1rem 1rem;
+}
+
+.pos-popup-total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.pos-popup-grand-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: #fff;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.pos-popup-thanks {
+  text-align: center;
+  margin-top: 1.25rem;
+  font-size: 0.95rem;
+  color: #64748b;
+  font-style: italic;
+}
+
