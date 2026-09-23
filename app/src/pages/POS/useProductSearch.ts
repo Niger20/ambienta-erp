@@ -83,6 +83,16 @@ export function useProductSearch(
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Agrega un producto elegido del dropdown y limpia la barra de búsqueda
+    const seleccionarProducto = (producto: Producto) => {
+        agregarProductoAlCarrito(producto);
+        setInputValue('');
+        setSearchResults([]);
+        setShowSearchDropdown(false);
+        setSearchFocusedIndex(-1);
+        inputRef.current?.focus();
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (showSearchDropdown && searchResults.length > 0) {
             if (e.key === 'ArrowDown') {
@@ -98,7 +108,7 @@ export function useProductSearch(
             if (e.key === 'Enter') {
                 if (searchFocusedIndex >= 0 && searchFocusedIndex < searchResults.length) {
                     e.preventDefault();
-                    agregarProductoAlCarrito(searchResults[searchFocusedIndex]);
+                    seleccionarProducto(searchResults[searchFocusedIndex]);
                     return;
                 }
             }
@@ -152,6 +162,6 @@ export function useProductSearch(
     return {
         inputValue, setInputValue, isSearching, searchResults, setSearchResults,
         showSearchDropdown, setShowSearchDropdown, searchFocusedIndex, setSearchFocusedIndex,
-        inputRef, buscarProducto, handleKeyDown,
+        inputRef, buscarProducto, handleKeyDown, seleccionarProducto,
     };
 }

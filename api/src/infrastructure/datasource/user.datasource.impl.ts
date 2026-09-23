@@ -11,24 +11,45 @@ import {
 } from "../../domain";
 import prisma from "../../data/postgres";
 
+const UNIQUE_FIELD_LABELS: Record<string, string> = {
+    nombreusuario: 'Ese nombre de usuario ya está en uso',
+    correo: 'Ese correo ya está registrado',
+};
+
+/** Traduce un choque de restricción única de Prisma (P2002) a un mensaje legible. */
+function friendlyUniqueConstraintError(error: unknown): string | null {
+    const prismaError = error as { code?: string; meta?: { target?: string[] | string } };
+    if (prismaError?.code !== 'P2002') return null;
+
+    const target = prismaError.meta?.target;
+    const fields = Array.isArray(target) ? target : typeof target === 'string' ? [target] : [];
+    const field = fields.find((f) => UNIQUE_FIELD_LABELS[f]);
+
+    return field ? UNIQUE_FIELD_LABELS[field] : 'Ya existe un registro con esos datos';
+}
+
 export class UserDatasourceImpl implements UserDatasource {
 
     async register(createUserDto: RegisterUserDto): Promise<UserEntity> {
         const rolInvitado = await prisma.roles.findUnique({ where: { nombre: UserRole.Invitado } });
 
-        const user = await prisma.usuarios.create({
-            data: {
-                nombreusuario: createUserDto.nombreusuario,
-                contrasenahash: createUserDto.contrasenahash,
-                nombre: createUserDto.nombre,
-                correo: createUserDto.correo,
-                correoverificado: false,
-                rol: UserRole.Invitado,
-                rolid: rolInvitado?.rolid ?? null,
-            }
-        });
+        try {
+            const user = await prisma.usuarios.create({
+                data: {
+                    nombreusuario: createUserDto.nombreusuario,
+                    contrasenahash: createUserDto.contrasenahash,
+                    nombre: createUserDto.nombre,
+                    correo: createUserDto.correo,
+                    correoverificado: false,
+                    rol: UserRole.Invitado,
+                    rolid: rolInvitado?.rolid ?? null,
+                }
+            });
 
-        return UserEntity.fromObject(user);
+            return UserEntity.fromObject(user);
+        } catch (error) {
+            throw friendlyUniqueConstraintError(error) ?? error;
+        }
     }
 
     async adminRegister(createUserDto: AdminRegisterUserDto): Promise<UserEntity> {
@@ -42,18 +63,22 @@ export class UserDatasourceImpl implements UserDatasource {
             rolRow = await prisma.roles.findUnique({ where: { nombre: rol } });
         }
 
-        const user = await prisma.usuarios.create({
-            data: {
-                nombreusuario: createUserDto.nombreusuario,
-                contrasenahash: createUserDto.contrasenahash,
-                nombre: createUserDto.nombre,
-                correo: createUserDto.correo,
-                rol: rolRow?.nombre ?? UserRole.Invitado,
-                rolid: rolRow?.rolid ?? null,
-            }
-        });
+        try {
+            const user = await prisma.usuarios.create({
+                data: {
+                    nombreusuario: createUserDto.nombreusuario,
+                    contrasenahash: createUserDto.contrasenahash,
+                    nombre: createUserDto.nombre,
+                    correo: createUserDto.correo,
+                    rol: rolRow?.nombre ?? UserRole.Invitado,
+                    rolid: rolRow?.rolid ?? null,
+                }
+            });
 
-        return UserEntity.fromObject(user);
+            return UserEntity.fromObject(user);
+        } catch (error) {
+            throw friendlyUniqueConstraintError(error) ?? error;
+        }
     }
 
     async delete(id: number): Promise<UserEntity> {
@@ -116,23 +141,31 @@ export class UserDatasourceImpl implements UserDatasource {
             data.rolid = rolRow?.rolid ?? null;
         }
 
-        const updatedUser = await prisma.usuarios.update({
-            where: { usuarioid: updateUserDto.id },
-            data
-        });
+        try {
+            const updatedUser = await prisma.usuarios.update({
+                where: { usuarioid: updateUserDto.id },
+                data
+            });
 
-        return UserEntity.fromObject(updatedUser);
+            return UserEntity.fromObject(updatedUser);
+        } catch (error) {
+            throw friendlyUniqueConstraintError(error) ?? error;
+        }
     }
 
     async updateProfile(usuarioid: number, values: { [key: string]: any }): Promise<UserEntity> {
         await this.getById(usuarioid);
 
-        const updatedUser = await prisma.usuarios.update({
-            where: { usuarioid },
-            data: values,
-        });
+        try {
+            const updatedUser = await prisma.usuarios.update({
+                where: { usuarioid },
+                data: values,
+            });
 
-        return UserEntity.fromObject(updatedUser);
+            return UserEntity.fromObject(updatedUser);
+        } catch (error) {
+            throw friendlyUniqueConstraintError(error) ?? error;
+        }
     }
 
     async getById(id: number): Promise<UserEntity> {

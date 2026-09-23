@@ -1,6 +1,11 @@
 /* =========================================
    SweetAlert2 Premium Custom Theme Overrides
    ========================================= */
+/* Por encima de cualquier modal (.modal-backdrop usa z-index 9999) */
+.swal2-container {
+  z-index: 100000 !important;
+}
+
 .swal2-backdrop-show {
   background: rgba(15, 23, 42, 0.75) !important;
   backdrop-filter: blur(4px) !important;

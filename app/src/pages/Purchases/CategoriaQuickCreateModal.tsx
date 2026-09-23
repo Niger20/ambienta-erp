@@ -10,7 +10,7 @@ interface CategoriaQuickCreateModalProps {
 
 export const CategoriaQuickCreateModal = ({ show, categoriaForm, setCategoriaForm, handleSaveCategoria, onClose }: CategoriaQuickCreateModalProps) => {
     return (
-        <Modal open={show} onClose={onClose} maxWidth={380} zIndex={1100}>
+        <Modal open={show} onClose={onClose} maxWidth={380} zIndex={10000}>
             <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Nueva Categoría</h3>
             <form onSubmit={handleSaveCategoria}>
                 <div className="form-group">

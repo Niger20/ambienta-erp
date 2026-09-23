@@ -17,7 +17,7 @@ export const CategoryModal = ({ show, isEditing, form, onChange, onSubmit, onCan
     if (!show) return null;
 
     return (
-        <div className="modal-backdrop" style={{ zIndex: 60 }}> {/* Higher z-index to sit on top of product modal */}
+        <div className="modal-backdrop" style={{ zIndex: 10000 }}> {/* Higher z-index to sit on top of product modal */}
             <div className="modal-content" style={{ maxWidth: '400px' }}>
                 <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>{isEditing ? 'Editar Categoría' : 'Crear Nueva Categoría'}</h2>
                 <form onSubmit={onSubmit}>

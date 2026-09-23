@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { LineaProducto, Producto } from './types';
 
 export function useCarrito(
@@ -6,8 +6,18 @@ export function useCarrito(
     showError: (msg: string) => void,
     setMetodoPago: (v: string) => void,
     setSuccessMsg: (v: string) => void,
+    metodoPago: string,
 ) {
     const [lineas, setLineas] = useState<LineaProducto[]>(initialLineas);
+    const metodoPagoRef = useRef(metodoPago);
+    metodoPagoRef.current = metodoPago;
+
+    // En cotizaciones (o productos agotados, que fuerzan cotización) no se limita por stock
+    const limiteStock = (producto: Producto): number | null => {
+        if (producto.stockactual == null) return null;
+        if (metodoPagoRef.current === 'cotizacion' || producto.stockactual <= 0) return null;
+        return producto.stockactual;
+    };
     const [lastAdded, setLastAdded] = useState<number | null>(null);
 
     useEffect(() => {
@@ -26,7 +36,8 @@ export function useCarrito(
                     showError(`La cantidad máxima permitida es 10000.`);
                     return prev;
                 }
-                if (producto.stockactual != null && currentLine.cantidad + 1 > producto.stockactual) {
+                const maxStock = limiteStock(producto);
+                if (maxStock != null && currentLine.cantidad + 1 > maxStock) {
                     showError(`Stock insuficiente para "${producto.nombre}". Solo hay ${producto.stockactual} disponibles.`);
                     return prev;
                 }
@@ -66,7 +77,7 @@ export function useCarrito(
                 showError(`La cantidad máxima permitida es 10000.`);
                 return;
             }
-            const maxStock = lineas[idx].producto.stockactual;
+            const maxStock = limiteStock(lineas[idx].producto);
             if (maxStock != null && parsed > maxStock) {
                 showError(`Stock máximo alcanzado. Solo hay ${maxStock} disponibles.`);
                 return;

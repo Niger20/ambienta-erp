@@ -35,7 +35,7 @@ const POS = () => {
     const payment = usePaymentState(savedPOS);
     const { metodoPago, setMetodoPago } = payment;
 
-    const carrito = useCarrito(savedPOS?.lineas || [], showError, setMetodoPago, setSuccessMsg);
+    const carrito = useCarrito(savedPOS?.lineas || [], showError, setMetodoPago, setSuccessMsg, metodoPago);
     const { lineas, setLineas, agregarProductoAlCarrito } = carrito;
 
     const search = useProductSearch(agregarProductoAlCarrito, showError);
@@ -235,7 +235,7 @@ const POS = () => {
                     searchFocusedIndex={search.searchFocusedIndex}
                     setShowSearchDropdown={search.setShowSearchDropdown}
                     setSearchResults={search.setSearchResults}
-                    agregarProductoAlCarrito={agregarProductoAlCarrito}
+                    agregarProductoAlCarrito={search.seleccionarProducto}
                 />
 
                 <ClienteSelector
