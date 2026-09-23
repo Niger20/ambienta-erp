@@ -9,7 +9,8 @@ Sistema integral de gestión de punto de venta (POS), administración de cliente
 ## ✨ Características Principales
 
 ### 📦 Módulo POS
-- **Cotizaciones** automáticas para productos agotados
+- **Cotizaciones** automáticas para productos agotados, sin límite de stock en la cantidad cotizada
+- **Búsqueda de productos** por código de barras, ID o nombre (la barra se limpia al agregar el producto)
 - **Ventas normales, crédito y mixto** con múltiples métodos de pago
 - **Facturación fiscal y comercial** con tipos de consecutivos
 - **Delivery integrado** con control de repartidores
@@ -98,7 +99,35 @@ PUBLIC_PATH=public
 JWT_SEED=tu_semilla_jwt_segura_aqui
 POSTGRES_URL=postgresql://usuario:contraseña@localhost:5432/AmbientaBD
 NODE_ENV=development
+
+# URL del frontend (se usa en el link de verificación de correo)
+APP_BASE_URL=http://localhost:5173
+
+# Correo de verificación — prioridad: Resend > SMTP > consola
+RESEND_API_KEY=
+RESEND_FROM=Ambienta ERP <onboarding@resend.dev>
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=Ambienta ERP <no-reply@ambienta.local>
+
+# Orígenes CORS adicionales, separados por coma (localhost siempre está permitido)
+ALLOWED_ORIGINS=https://tu-dominio-de-produccion.up.railway.app
 ```
+
+Ver `api/.env.template` para la referencia completa con comentarios.
+
+#### 📧 Envío de correos
+El correo de verificación de cuenta se envía con el primer método configurado:
+1. **Resend** (recomendado en producción): API HTTP, funciona aunque el hosting bloquee el puerto SMTP (como Railway). Requiere `RESEND_API_KEY`; crea una cuenta gratis en [resend.com](https://resend.com).
+2. **SMTP** (Nodemailer): alternativa, p. ej. Gmail con una *contraseña de aplicación*. Tiene timeouts de 8 s para no colgar las peticiones si el servidor no responde.
+3. **Consola**: si no hay Resend ni SMTP, el link de verificación se imprime en la consola del backend (modo desarrollo).
+
+Si el envío falla durante el registro, **la cuenta se crea igual**: el error queda en el log y el usuario puede pedir que se reenvíe el correo.
+
+#### 🌐 CORS
+Los orígenes `localhost` están permitidos siempre. Los dominios de producción **no van en el código**: se agregan en `ALLOWED_ORIGINS` (separados por coma), en el `.env` o en el dashboard del hosting.
 
 **Frontend (variables dentro de `app/src`)**
 ```
@@ -260,6 +289,10 @@ La API usa **JWT (JSON Web Tokens)**:
 POSTGRES_URL=postgresql://...
 JWT_SEED=tu_seed_segura
 NODE_ENV=production
+APP_BASE_URL=https://tu-frontend.up.railway.app
+ALLOWED_ORIGINS=https://tu-frontend.up.railway.app
+RESEND_API_KEY=re_...          # Railway bloquea SMTP saliente: usar Resend
+RESEND_FROM=Ambienta ERP <no-reply@tu-dominio.com>
 ```
 
 ---
@@ -271,6 +304,12 @@ NODE_ENV=production
 
 ### Error: `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR`
 **Solución:** Configurar `trust proxy` en Express (ya incluido en código)
+
+### Error de CORS en producción (`blocked by CORS policy`)
+**Solución:** Agregar la URL pública del frontend a `ALLOWED_ORIGINS` en las variables de entorno del backend y reiniciar el servicio.
+
+### No llega el correo de verificación
+**Solución:** Revisar los logs del backend. En Railway el puerto SMTP está bloqueado: configurar `RESEND_API_KEY`. Sin Resend ni SMTP configurados, el link aparece en la consola del backend.
 
 ### Error: `ventas_tipoventa_check` al cotizar con delivery
 **Solución:** Verificar que el constraint de `ventas` tabla permita `COTIZACION` en la BD:
@@ -286,7 +325,14 @@ ALTER TABLE ventas ADD CONSTRAINT ventas_tipoventa_check
 
 ### Cotizaciones
 - Productos con **stock 0** se agregan como cotización automáticamente
-- No se descuenta stock hasta que se converti la cotización a venta formal
+- En modo cotización (o con productos agotados) la cantidad **no está limitada por el stock actual**: se pueden cotizar, por ejemplo, 5 unidades de un producto con stock 0
+- En ventas de contado, crédito o mixto la cantidad sí se limita al stock disponible
+- No se descuenta stock hasta que se convierta la cotización a venta formal
+
+### Modales y alertas
+- Los modales usan `.modal-backdrop` con `z-index: 9999`
+- Los modales anidados (p. ej. **Crear Nueva Categoría** desde el modal de producto) usan `zIndex: 10000` para abrirse encima
+- Las alertas de SweetAlert2 (errores, confirmaciones) usan `z-index: 100000` (`app/src/styles/sweetalert.css`) para mostrarse siempre sobre cualquier modal
 
 ### Facturación
 - **Sin Consecutivo**: Factura comercial simple (por defecto en POS)
